@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block content %}
+<script>
+		function toggleDetails(i) {
+			let el1 =document.getElementsByClassName(`table-detail-${i}`);
+			for (let i = 0; i < el1.length; i++) {
+  				let status=el1[i].style.display
+				if(status=="none") {
+                    el1[i].style.display = "table-row"
+                }else{
+				    el1[i].style.display = "none"
+				}
+			}
+        }
+	</script>
+    <link href="static/css/prism.min.css" rel="stylesheet">
+    <script src="static/js/prism.min.js"></script>
+    <script src="static/js/prism-http.min.js"></script>
+    <script src="static/js/prism-javascript.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        }
+        pre[class*="language-"] {
+            padding: .5em;
+            margin: .5em 0;
+            overflow: auto;
+            max-height: 300px;
+        }
+
+        pre[class*="language-"] {
+            background: white;
+        }
+
+        #table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: fixed;
+            word-break: break-all
+        }
+
+        #table td, #table th {
+            border: 1px solid #ddd;
+            padding: 4px;
+        }
+
+        #table tr.table-item:hover {
+            background-color: #ddd;
+        }
+
+        #table tr.table-item {
+            cursor: pointer;
+        }
+
+        #table th {
+            padding-top: 8px;
+            padding-bottom: 8px;
+            border: 1px solid #eee;
+            background-color: #ddd;
+            color: black;
+            text-align: left;
+        }
+
+        .detail-item {
+            margin: 5px;
+        }
+    </style>
+	<div class="row">
+	  <div class="col-md-1"></div>
+	  <div class="col-md-10">
+		  <div>
+	  		<h3>vuln_type:【{{keywords}}】的搜索结果<small>共{{page_info['total_rows']}}记录，本页条数:{{page_info['size']}},当前{{page_info['current_page']}}页,共{{page_info["total_pages"]}}页</small></h3>
+			  	<table id="table" >
+                    <tbody>
+			  	<tr>
+			  		<th colspan="2">#</th>
+			  		<th colspan="2">VlunType</th>
+			  		<th colspan="6">Url</th>
+                    <th colspan="2">CreateTime</th>
+			  	</tr>
+			  	{% for row in page_info['rows'] %}
+			  	<tr onclick="toggleDetails({{row['num']}})">
+			  		<td colspan="2">{{row['num']}}</td>
+			  		<td colspan="2">{{row['vulntype']}}</td>
+			  		<td colspan="6">{{row['url']}}</td>
+			  		<td colspan="2">{{row['createtime']}}</td>
+			  	</tr>
+                <!--start-->
+                <!--<tr class="table-detail-{{row['num']}}" style="display: none;">-->
+                    <!--<td colspan="2">-->
+                        <!--<p class="detail-item">Request</p>-->
+                    <!--</td>-->
+                    <!--<td colspan="10">-->
+                        <!--<p class="detail-item"></p>-->
+                        <!--<pre class="language-http"><code class="language-http">{{row["request_raw"]}}</code></pre>-->
+                    <!--</td>-->
+                <!--</tr>-->
+
+                <!--<tr class="table-detail-{{row['num']}}" style="display: none;">-->
+                    <!--<td colspan="2">-->
+                        <!--<p class="detail-item">Response</p>-->
+                    <!--</td>-->
+                    <!--<td colspan="10">-->
+                        <!--<p class="detail-item"></p>-->
+                        <!--<pre class="language-http"><code class="language-http">{{row["response_raw"]}}</code></pre>-->
+                    <!--</td>-->
+                <!--</tr>-->
+                <!--<tr class="table-detail-{{row['num']}}" style="display: none;">-->
+                    <!--<td colspan="2">-->
+                        <!--<p class="detail-item">Rule</p>-->
+                    <!--</td>-->
+                    <!--<td colspan="10">-->
+                        <!--<p class="detail-item"></p>-->
+                        <!--<pre class="language-http"><code class="language-http">{{row["rule_source"]}}</code></pre>-->
+                    <!--</td>-->
+                <!--</tr>-->
+                <!--end-->
+
+
+
+			  	{% endfor %}
+                    </tbody>
+				</table>
+              <!-- 分页组件js -->
+				<script src="static/bugs/js/jquery.twbsPagination.js"></script>
+				<ul id="pagination" class="pagination-sm"></ul>
+				<script >
+					 $(pagination).twbsPagination({
+					 	first: "首页",
+					 	prev: "前一页",
+					 	next: "后一页",
+					 	last: "尾页",
+				        totalPages: {{page_info['total_pages']}},
+				        visiblePages: 5,
+				        startPage: {{page_info['current_page']}},
+				        onPageClick: function (event, page) {
+				            location.href="/search?keywords={{keywords}}&size={{page_info['size']}}&page="+page;
+				        }
+				    });
+				</script>
+
+			</div>
+	 	</div>
+	  <div class="col-md-1"></div>
+	</div>
+{% endblock %}

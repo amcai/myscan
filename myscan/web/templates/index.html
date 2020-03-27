@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="jumbotron masthead">
+    <div class="row">
+        <div class="col-sm-8  col-xs-12 col-sm-offset-2">
+            <h2 class="text-center">Myscan被动扫描结果&nbsp;<small><small>漏洞总数：{{total_counts}}条</small></small></h2>
+            <form class="form-horizontal" action="/search" method="get" name="login">
+                <div class="input-group">
+                    <input type="text" class="form-control " id="keywords" name="keywords" placeholder="输入搜索关键词……" >
+                    <span class="input-group-btn">
+                    <button class="btn btn-default btn-primary" type="submit"><span class="glyphicon glyphicon-search"></button>
+                  </span>
+
+                </div><!-- /input-group -->
+                <br/>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="container projects">
+</div>
+
+{% endblock %}

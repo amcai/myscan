@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="jumbotron masthead">
+    <div class="row">
+
+
+        <div class="col-sm-8  col-xs-12 col-sm-offset-2">
+
+            <h2 class="text-center">Myscan被动扫描结果&nbsp;<small><small>漏洞总数：{{total_counts}}条</small></small></h2>
+            <form class="form-horizontal" action="/search" method="get" name="login">
+                <div class="input-group">
+                    <input type="text" class="form-control " id="keywords" name="keywords" placeholder="输入搜索关键词……">
+                    <span class="input-group-btn">
+                    <button class="btn btn-default btn-primary" type="submit"><span class="glyphicon glyphicon-search"></button>
+                  </span>
+		    
+                </div><!-- /input-group -->
+                <br/>
+
+            </form>
+
+        <!-- -&#45;&#45;-->
+        <div class="dropdown">
+            <button type="button" class="btn dropdown-toggle" id="dropdownMenu1"
+                    data-toggle="dropdown">
+                主题
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+                <li role="presentation">
+                    <a role="menuitem" tabindex="-1" href="#">Java</a>
+                </li>
+                <li role="presentation">
+                    <a role="menuitem" tabindex="-1" href="#">数据挖掘</a>
+                </li>
+                <li role="presentation">
+                    <a role="menuitem" tabindex="-1" href="#">数据通信/网络</a>
+                </li>
+            </ul>
+        </div>
+
+        <!--list-->
+        <div class="progress">
+        <div class="progress-bar" role="progressbar" aria-valuenow="hahahahha" aria-valuemin="0" aria-valuemax="100" style="width: 10%;" ">
+            <p></p>
+            <p>fuckyou</p>
+            </div>
+      </div>
+    </div>
+        <!-- -&#45;&#45;-->
+    </div>
+</div>
+
+
+<div class="container projects">
+    <div style="width:600px; margin-top: 120px;margin-left:320px;" >
+  <canvas id="myChart" width="600" height="300"></canvas>
+  </div>
+<script src="https://cdn.bootcss.com/Chart.js/2.8.0/Chart.js"></script>
+<script>
+var ctx = document.getElementById('myChart').getContext('2d');
+var myChart = new Chart(ctx, {
+     type: 'polarArea',   //  线形图：line、条形图：bar 、雷达图：radar、馅饼和甜甜圈图表：pie、极区面积图：polarArea、汽泡：bubble
+    data: {
+        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+        datasets: [{
+            label: '# of Votes',
+            data: [12, 19, 3, 5, 2, 3],
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(255, 206, 86, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(153, 102, 255, 0.2)',
+                'rgba(255, 159, 64, 0.2)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero: true
+                }
+            }]
+        }
+    }
+});
+</script>
+</div>
+
+{% endblock %}

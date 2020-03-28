@@ -15,6 +15,12 @@ myscan依赖burpsuite和redis，需启动redis和burpsuite插入myscan的插件�
 
 myscan调取redis数据，对每一个request/response数据包进行perfile(访问url)、perfolder(每一个目录)、perscheme(每一个数据包)分类去重，通过redis分发到各个子进程与运行相应的poc。
 
+## 演示地址
+
+[myscan演示视频](https://www.bilibili.com/video/BV1tV411f7p6/)
+
+
+
 ## 如何运行
 
 平台要求:
@@ -23,7 +29,7 @@ myscan调取redis数据，对每一个request/response数据包进行perfile(访
 
 软件要求: 
 
-python > 3.7.5, redis-server
+python > 3.7.5 , redis-server ,(开发基于3.7.5，高版本未测试)
 
 ```bash
 $ redis-server # 起一个redis服务，默认监听127.1:6379

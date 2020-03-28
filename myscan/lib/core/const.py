@@ -245,4 +245,4 @@ OPERATING_SYSTEM = {
                                                                                    "SunOS", "UNIX", "Ubuntu"]
 }
 
-URL_ARGS=("open","url","redir","location")
+URL_ARGS=('open', 'location', 'link', 'goto', 'address', 'target', 'imageurl', 'wap', 'domain', '3g', 'g', 'go', 'url', 'share', 'redir', 'sourceurl', 'addr', 'source', 'u', 'to', 'src', 'display')

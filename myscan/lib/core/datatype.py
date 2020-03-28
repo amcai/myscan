@@ -20,7 +20,7 @@ class AttribDict(OrderedDict):
             return super(AttribDict, self).__getattribute__(name)
         else:
             try:
-                return self[name]
+                return self.get(name)
             except KeyError:
                 raise AttributeError(name)
 

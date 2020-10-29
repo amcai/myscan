@@ -34,7 +34,7 @@ def cmd_line_parser(argv=None):
                             help="0 ==> Show :all(debug,info,error,critical .1 ==> Show: info,error,critical 2 ==> Show: error,critical"
                                  "3 ==> Show :critical ")
         common.add_argument("--html-output", dest="html_output", default="myscan_result.html",
-                            help="默认myscan_result.html 指定漏洞输出文件")
+                            help="默认myscan_result_{num}.html 指定漏洞输出文件")
         common.add_argument("--clean", dest="clean", action="store_true", help="使用此参数可清除Redis所有数据")
         common.add_argument("--check-reverse", dest="check_reverse", action="store_true", help="检测reverse service 是否正常")
         hostscan = parser.add_argument_group('hostscan', "Config hostscan")
@@ -43,35 +43,35 @@ def cmd_line_parser(argv=None):
         hostscan.add_argument("--input-jsonfile", dest="input_jsonfile", type=str, default=None, help="从指定文件格式输入,格式参考 'docs/Class3-hostscan开发指南.md'")
         pocs = parser.add_argument_group('pocs', "Config pocs args and pocs to targets")
         pocs.add_argument("--disable", dest="disable", nargs='+', default=[],
-                          help="Disable some moudle (e.g. --disable xss sqli un_auth) . you can use '--disable all' to disable all pocs ,default: []")
+                          help="默认全部开启POC，使用此参数代表禁止de POCS，可根据POC文件名来填写，e.g. --disable xss sqli un_auth，可使用--disable all 代表关闭全部，此时常配合--plugins 使用")
         pocs.add_argument("--enable", dest="enable", nargs='+', default=[],
-                          help="Enable some moudle (e.g. --enable xss sqli un_auth) you can use --enable * ,default: *,please care when you "
+                          help="默认全部开启POC，使用此参数代表仅开启的POCS，可根据POC文件名来填写，e.g. --enable xss sqli un_auth"
                                "use --enable --disable together,will --enable will not take effect")
         pocs.add_argument("--dishost", dest="dishost", nargs='+',
                           default=["baidu.com", "google.com", "firefox.com", "mozilla.org", "bdstatic.com",
                                    "mozilla.com"],
-                          help='不扫描主机 .默认"baidu.com","google.com","firefox.com","mozilla.org","bdstatic.com","mozilla.com"')
-        pocs.add_argument("--host", dest="host", nargs='+', default=None, help="只扫描的主机,不携带端口")
+                          help='使用此参数代表不扫描主机 .默认"baidu.com","google.com","firefox.com","mozilla.org","bdstatic.com","mozilla.com"')
+        pocs.add_argument("--host", dest="host", nargs='+', default=None, help="只扫描的主机,主机名不携带端口")
 
         controller = parser.add_argument_group('Controller', "")
-        controller.add_argument("--threads", dest="threads", type=int, default=2, choices=range(1, 21),
-                                help="Yaml Script threads num,default: 10 ")
+        controller.add_argument("--threads", dest="threads", type=int, default=3, choices=range(1, 21),
+                                help="某些POC的线程数，默认3")
         controller.add_argument("--process", dest="process", type=int, default=5, choices=range(1, 61),
-                                help="Python script process num,default:5")
+                                help="myscan进程数，默认5")
 
-        request = parser.add_argument_group('Request', "Config request args")
+        request = parser.add_argument_group('Request', "配置请求参数")
         request.add_argument("--retry", dest="retry", type=int, default=0, help="定义全局request出错后重新尝试请求次数，默认0")
-        request.add_argument("--ipv6", dest="ipv6", action="store_true", help="使用此参数优先ipv6地址,ipv6无记录再ipv4")
+        request.add_argument("--ipv6", dest="ipv6", action="store_true", help="使用此参数优先ipv6地址,ipv6无记录再使用ipv4地址")
 
         request.add_argument("--cookie", dest="cookie", default=None, help="测试越权使用cookie，一般为低权限cookie")
         # request.add_argument("--timeout", dest="timeout", type=int, default=None,
         #                      help="定义全局request的超时，默认使用poc脚本自定义超时或request默认超时")
-        plugin = parser.add_argument_group('Plugin', "Config languages args")
+        plugin = parser.add_argument_group('Plugin', "对流量进行收集的插件")
         plugin.add_argument("--plugins", dest="plugins", nargs='+', default=None, help="指定插件")
 
         proxy = parser.add_argument_group('Proxy', "Proxy accept: http,https")
         proxy.add_argument("--proxy", dest="proxy", type=str, default=None,
-                           help="network proxy,accept host:port,e.g:127.0.0.1:8080")
+                           help="网络代理,接受host:port形式,e.g:127.0.0.1:8080")
 
         args = parser.parse_args()
 

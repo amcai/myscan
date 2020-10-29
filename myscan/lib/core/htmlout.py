@@ -25,6 +25,7 @@ import os
 from myscan.lib.core.common import getredis
 from myscan.lib.core.data import logger, cmd_line_options
 from myscan.config import scan_set
+
 import threading
 import pickle
 import traceback
@@ -32,38 +33,40 @@ from myscan.lib.core.options import gethtmlheader
 
 
 class htmlexport():
-    def __init__(self, results):
+    def __init__(self, results,filename):
         self.results = results
+        self.outfilename=filename
         self.formatdata = '\n<input type="hidden" class="data-vuln-item" value="{}"/>\n'
-        self.level_keys={
-            "0":"Low",
-            "1":"Medium",
-            "2":"High"
+        self.level_keys = {
+            "0": "Low",
+            "1": "Medium",
+            "2": "High"
         }
+
     def save(self):
         write_data = ""
-        if isinstance(self.results , list) or isinstance(self.results,tuple):
+        if isinstance(self.results, list) or isinstance(self.results, tuple):
             for result in self.results:
                 if isinstance(result, dict):
                     if result:
                         name = str(result.get("name", "unknown name"))
                         url = str(result.get("url", "unknown url"))
-                        level = self.getLevel(result.get("level",None))
+                        level = self.getLevel(result.get("level", None))
                         create_time = str(result.get("createtime", "unnknown create_time"))
                         detail = result.get("detail", {})
                         newdetail = {}
                         if detail:
                             for k, v in detail.items():
-                                if isinstance(v, bytes) or isinstance(v,bytearray):
-                                    newdetail[k] = self.verifyBigData(v.decode("utf-8",errors="ignore"))
-                                elif not isinstance(v,str):
+                                if isinstance(v, bytes) or isinstance(v, bytearray):
+                                    newdetail[k] = self.verifyBigData(v.decode("utf-8", errors="ignore"))
+                                elif not isinstance(v, str):
                                     newdetail[k] = self.verifyBigData(str(v))
                                 else:
-                                    newdetail[k]=self.verifyBigData(v)
+                                    newdetail[k] = self.verifyBigData(v)
                         data = {
                             "name": name,
                             "url": url,
-                            "level":level,
+                            "level": level,
                             "create_time": create_time,
                             "detail": newdetail
                         }
@@ -76,31 +79,35 @@ class htmlexport():
             logger.warning("Results need be a list or tuple ,you give results:{}".format(self.results))
         if write_data:
             try:
-                with open(cmd_line_options.html_output, "a") as f:
+                with open(self.outfilename, "a") as f:
                     f.write(write_data)
                     f.flush()
             except Exception as ex:
-                logger.warning("Create file {} get error:{}".format(cmd_line_options.html_output, ex))
+                logger.warning("Create file {} get error:{}".format(self.outfilename, ex))
 
-    def getLevel(self,level):
-        if level!=None:
+    def getLevel(self, level):
+        if level != None:
             if str(level) in self.level_keys.keys():
                 return self.level_keys[str(level)]
             else:
                 return "Unknown"
         else:
             return "Unknown"
-    def verifyBigData(self,text):
-        if len(text)>1024000:
+
+    def verifyBigData(self, text):
+        if len(text) > 1024000:
             return "big data,will dont show"
         return text
 
 
 def writeresults():
     red = getredis()
+    total_write = 0
+    if "." not in cmd_line_options.html_output:
+        cmd_line_options.html_output = cmd_line_options.html_output + ".html"
     while True:
         try:
-            results=[]
+            results = []
             while True:
                 id = red.lpop("vuln_all_write")
                 if id:
@@ -109,10 +116,15 @@ def writeresults():
                         results.append(pickle.loads(pickle_data))
                 else:
                     if results:
-                        check()
-                        out = htmlexport(results)
-                        out.save()
-                        results = []
+                        for result in results:
+                            total_write += 1
+                            current = int(total_write / scan_set.get("max_html_output", 10))
+                            outfilename = "{}{}.html".format('.'.join(cmd_line_options.html_output.split(".")[:-1]),
+                                                             current)
+                            check(outfilename)
+                            out = htmlexport([result],outfilename)
+                            out.save()
+                            results = []
                     time.sleep(5)
         except KeyboardInterrupt as ex:
             logger.warning("Ctrl+C was pressed ,aborted program")
@@ -127,12 +139,14 @@ def start_write_results():
     t.daemon = True
     t.start()
 
-def check():
-    if os.path.exists(cmd_line_options.html_output):
+
+def check(filename):
+    if os.path.exists(filename):
         pass
     else:
         try:
-            with open(cmd_line_options.html_output, "w") as f:
+            with open(filename, "w") as f:
                 f.write(gethtmlheader())
+                f.flush()
         except Exception as ex:
-            logger.warning("Create file {} get error:{}".format(cmd_line_options.html_output, ex))
+            logger.warning("Create file {} get error:{}".format(filename, ex))

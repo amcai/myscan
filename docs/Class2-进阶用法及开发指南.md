@@ -3,20 +3,18 @@
 ### burp插件
 >burp中一个请求体必须对应的响应体才能导入到redis中。
 >
->burp插件具有两种收集数据方式，一种是proxy模式，此模式是代理proxy和repeater两种流量流量，此流量会自动去重。一种是右键模式，此模式在proxy，repeater等其他地方右键出现"Send to Myscan"点击即可把数据包格式化发送到redis，此流量不会去重。当然不要忘了第一句话，必须有响应体才能导入到redis。
+>Burpsuite插件搜集proxy，repeater，crawler的流量，在默认配置下，也就是proxy mode:true,Rightclick uniq:true,情况下，基本burpsuite除一些不必要的流量，如Intruder的流量，绝大部分测试时的流量都会发送到redis任务队列，去重逻辑在myscan中实现，根据Rightclick uniq参数的值实现是否去重 ，插件只是起流量搜集作用，当然不要忘了第一句话，必须有响应体才能导入到redis。
 >
->以上两种模式，基本覆盖测试需求，如爬虫，或正常浏览页面的流量代理到burp，此时proxy模式打开情况下，流量自动去重，送入redis等待python工程取出来检测。 如果在进行后台测试时，可把proxy模式关闭，流量经过burp后，可选择性右键"Send to Myscan"，当然在Proxy项目头可按住Shift多选发送。
 
 ### 反连平台使用
->
->此处等待作者吧啦吧啦
->
+可参考
 
-### 
+- myscan/myscan/pocs/perscheme/poc_shiro_rce_2019.py
+- myscan/myscan/pocs/perfolder/solr/poc_solr_cve-2017-12629-xxe_2017.py 
 
 ### 用户可开发poc目录
 * 所有开发均针对下列Example dict数据结构，进行开发，主要可开发三个方面。
-* 用户可在plugin目录开发，比如把所有burpsuite过来的数据，不去重保存在elasticsearch，详见plugins/esexport.py
+* 用户可在plugin目录开发，比如把所有burpsuite过来的数据，不去重保存在elasticsearch，详见plugins/webscan/es_export_v1.py
 * 用户可在pocs的三个目录perfile，perfolder，perscheme对针对文件，针对路径，针对请求体进行poc开发。
 * 用户可在pocs的search.py目录添加search规则进行开发。
 * 用户可在config.py配置自己poc脚本里面的开关变量。
@@ -142,15 +140,6 @@
 }
 ```
 
-### Redis 各个字段及其作用
-* burpdata (list) :来自burp格式化json字符串
-* workpython (list) :
-* count_all (hash) : total:测试总数,queue:len(burp_data)
-                    block_host_port:len(block_host_port) 
-* vuln_all (list): 存放所有result的python序列化dict
-* vuln_(pocname) (list): 存放pocname的result的python序列化dict
-* saerch_(hosthash) (set): search 搜索结果的host去重
-
 ### POC编写
 
 程序已有多种样例，可先阅读已编写好的代码。
@@ -172,5 +161,5 @@ self.result.append({
             }
         })
 >```
->dict数据必须包含"name","url","level","detail"四个key,其中detail字典里可自定义数据。
+>dict数据必须包含"name","url","level","detail"四个key,除detail字段为字典外，其他三个值均为字符串，其中detail字典里可自定义数据。
 > 

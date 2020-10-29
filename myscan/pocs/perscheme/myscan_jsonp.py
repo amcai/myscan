@@ -25,7 +25,7 @@ class POC():
         self.level = 1  # 0:Low  1:Medium 2:High
 
     def verify(self):
-        if self.dictdata.get("url").get("extension") in notAcceptedExt:
+        if self.dictdata.get("url").get("extension").lower() in notAcceptedExt:
             return
         # 配置不当
         parser = dictdata_parser(self.dictdata)

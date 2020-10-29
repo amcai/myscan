@@ -4,6 +4,7 @@
 # @File    : block_info.py
 from myscan.lib.core.common import getredis
 from myscan.config import scan_set
+from myscan.lib.core.data import logger
 
 
 class block_info():
@@ -22,19 +23,16 @@ class block_info():
         # 查看主机是否被封算法
         # 把主机（host_port）最近两百个结果保存到redis,统计最近两百个结果timeout次数，达到80及为主机被封，不再处理。
         if not self.red.exists(self.count_res_key):
-            if int(scan_set.get("block_count", 80))>200:
-                for x in range(int(scan_set.get("block_count", 80))):
-                    self.red.rpush(self.count_res_key, "0")
-            else:
-                for x in range(200):
-                    self.red.rpush(self.count_res_key, "0")
-        self.red.rpush(self.count_res_key, str(status))
-        self.red.ltrim(self.count_res_key, 1, -1)
+            for x in range(int(scan_set.get("block_count"))):
+                self.red.rpush(self.count_res_key, "0")
+        self.red.lpush(self.count_res_key, str(status))
+        self.red.ltrim(self.count_res_key, 0, int(scan_set.get("block_count")) - 1)
         r = self.red.lrange(self.count_res_key, 0, -1)
         error_nums = r.count(b"1")
-        if error_nums >= int(scan_set.get("block_count", 80)):
-            self.red.sadd(self.block_key, self.host_port)
-            self.red.hincrby("count_all", "block_host", amount=1)
+        if error_nums >= int(scan_set.get("block_count")):
+            if self.red.sadd(self.block_key, self.host_port) == 1:
+                self.red.hincrby("count_all", "block_host", amount=1)
+                logger.warning("{} blocked,never test it ".format(self.host_port))
         return error_nums
 
     def is_block(self):
@@ -42,3 +40,6 @@ class block_info():
             return True
         else:
             return False
+
+    def block_it(self):
+        self.red.sadd(self.block_key, self.host_port)

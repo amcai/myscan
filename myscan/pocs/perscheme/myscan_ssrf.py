@@ -25,7 +25,7 @@ class POC():
         self.level = 1  # 0:Low  1:Medium 2:High
 
     def verify(self):
-        if self.dictdata.get("url").get("extension") in notAcceptedExt:
+        if self.dictdata.get("url").get("extension").lower() in notAcceptedExt:
             return
         self.parser = dictdata_parser(self.dictdata)
         params = self.dictdata.get("request").get("params").get("params_url") + \
@@ -91,7 +91,7 @@ class POC():
 
     def isneedtest(self, param):
         name = param.get("name", "")
-        if name is not "":
+        if name != "":
             for key in URL_ARGS:
                 if name.lower() in key.lower():
                     return True

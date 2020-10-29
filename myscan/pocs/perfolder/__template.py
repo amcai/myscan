@@ -8,6 +8,7 @@ from myscan.lib.parse.dictdata_parser import dictdata_parser  # 写了一些操�
 from myscan.lib.parse.response_parser import response_parser  ##写了一些操作resonse的方法的类
 from myscan.lib.helper.request import request  # 修改了requests.request请求的库，建议使用此库，会在redis计数
 from myscan.lib.helper.helper_socket import socket_send_withssl, socket_send  # 如果需要，socket的方法封装
+from myscan.config import scan_set
 
 
 class POC():
@@ -17,15 +18,19 @@ class POC():
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
         self.name = "your poc name"
         self.vulmsg = "your poc detail msg"
-        self.level = 1  # 0:Low  1:Medium 2:High
+        self.level = 2  # 0:Low  1:Medium 2:High
 
     def verify(self):
-        pass
+        # 根据config.py 配置的深度，限定一下目录深度
+        if self.url.count("/") > int(scan_set.get("max_dir", 2)) + 2:
+            return
         self.result.append({
             "name": self.name,
-            "url": "http://example.com/test.php",
+            "url": self.url,
             "level": self.level,  # 0:Low  1:Medium 2:High
             "detail": {
                 "vulmsg": self.vulmsg,
+                "request":"",
+                "response":""
             }
         })

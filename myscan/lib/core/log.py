@@ -40,11 +40,11 @@ class Logger(object):
         :return:
         """
         # self.logger.debug(Fore.CYAN + "[DEBUG] - " + str(msg) + Style.RESET_ALL)
-        self.logger.debug("\033[0;36;40m" + "[{}] - ".format(text) + str(msg).strip() + "\033[0m")
+        self.logger.debug("\033[0;36;40m" + "[{}] - ".format(text) + str(msg).strip().capitalize() + "\033[0m")
 
     def critical(self, msg, text="SUCCESS"):
         # self.logger.info(Fore.RED + "[SUCCESS] - " + str(msg) + Style.RESET_ALL)
-        self.logger.critical("\033[0;31;40m" + "[{}] - ".format(text) + str(msg).strip() + "\033[0m")
+        self.logger.critical("\033[0;31;40m" + "[{}] - ".format(text) + str(msg).strip().capitalize() + "\033[0m")
 
     def warning(self, msg, text="WARNING"):
         # self.logger.warning(Fore.YELLOW + "[WARNING] - " + str(msg) + Style.RESET_ALL)
@@ -55,4 +55,4 @@ class Logger(object):
 
     def info(self, msg, text="INFO"):
         # self.logger.critical(Fore.GREEN + "[INFO] - " + str(msg) + Style.RESET_ALL)
-        self.logger.info("\033[0;32;40m" + "[{}] - ".format(text) + str(msg).strip() + "\033[0m")
+        self.logger.info("\033[0;32;40m" + "[{}] - ".format(text) + str(msg).strip().capitalize() + "\033[0m")

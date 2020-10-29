@@ -44,7 +44,7 @@ def index():
             insert_db(res)
             return json.dumps({"status": "success"})
         except Exception as ex:
-            logger.warning("process index d get error:{}".format(ex))
+            logger.warning("scan index d get error:{}".format(ex))
             pass
     return json.dumps({"status": "fail", "reason": ""})
 
@@ -79,5 +79,7 @@ def search():
 
 def http_start(secret_key):
     app.config["secret_key"] = secret_key
+    # ip = int(reverse_set.get("reverse_http_ip"))
+    ip="0.0.0.0" # 这里不用配置中的ip是因为，像腾讯云，监听IP是个内网，但是有个公网地址。
     port = int(reverse_set.get("reverse_http_port"))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host=ip, port=port)

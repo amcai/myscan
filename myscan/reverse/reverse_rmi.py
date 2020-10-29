@@ -24,7 +24,7 @@ def decode_rmi(query):
 
 def rmi_response(client, address):
     try:
-        client.settimeout(5)
+        client.settimeout(30)
         buf = client.recv(1024)
         if b"\x4a\x52\x4d\x49" in buf:
             send_data = b"\x4e"
@@ -44,7 +44,7 @@ def rmi_response(client, address):
                 path = bytearray(buf1).split(b"\xdf\x74")[-1][2:].decode(errors="ignore")
                 print("client:{} send path:{}".format(address, path))
                 res = {}
-                res["type"] = "dns"
+                res["type"] = "rmi"
                 res["client"] = address[0]
                 res["query"] = path
                 res["info"] = decode_rmi(path)
@@ -58,12 +58,13 @@ def rmi_response(client, address):
 
 
 def main():
-    max_conn = 200
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ip_port = ("0.0.0.0", int(reverse_set.get("reverse_rmi_port")))
+    # ip=reverse_set.get("reverse_rmi_ip")
+    ip="0.0.0.0" # 这里不用配置中的ip是因为，像腾讯云，监听IP是个内网，但是有个公网地址。
+    ip_port = (ip, int(reverse_set.get("reverse_rmi_port")))
     sock.bind(ip_port)
     sock.listen(200)
-    logger.info("RMI listen: 0.0.0.0:{}".format(int(reverse_set.get("reverse_rmi_port"))))
+    logger.info("RMI listen: {}:{}".format(ip,int(reverse_set.get("reverse_rmi_port"))))
     while True:
         client, address = sock.accept()
         thread = threading.Thread(target=rmi_response, args=(client, address))

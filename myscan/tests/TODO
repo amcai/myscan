@@ -1,0 +1,14 @@
+2.布尔盲注去除图片后缀 OK
+3.支持--clean单独参数
+4.继承类 ok
+5.burp jar 输出url ok
+6.iis 短文件名优化
+7.反连平台支持ldap ok
+8.burp jar 右键检测优化，支持去重。ok
+9.poc 超时 ok
+10.sql error 误报 多进程处理，无法修改
+12。全局变量超时，考虑？？？？notok ，sql注入需要特定时间。
+
+13.phpstudy 目录问题
+14.php  CVE-2019-11043 https://github.com/jas502n/CVE-2019-11043/blob/master/php-rce-check.py
+15.

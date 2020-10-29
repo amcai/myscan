@@ -21,10 +21,10 @@ from myscan.lib.parse.dictdata_parser import dictdata_parser
 from myscan.lib.core.const import notAcceptedExt
 from myscan.lib.parse.response_parser import response_parser
 from myscan.lib.core.common import get_random_str
-from myscan.lib.scriptlib.xss.common import htmlparser
+from myscan.lib.scriptlib.xss.common import htmlparser,getposition
 from myscan.lib.scriptlib.xss.common import check
 from myscan.config import plugin_set
-
+import copy
 
 class POC():
     def __init__(self, workdata):
@@ -39,20 +39,16 @@ class POC():
 
         # xssflagstr = get_random_str(6)
 
-        if self.dictdata.get("url").get("extension") in notAcceptedExt:
+        if self.dictdata.get("url").get("extension").lower() in notAcceptedExt:
             return
-        # 此处应该添加一个返回包content-type 黑名单，待收集
         response_ct = self.dictdata.get("response").get("headers").get("Content-Type", "")
-        is_block_header = False
-        # for block_header in ["application", "text/plain", "text/json", "image","text/javascript"]:
-        #     is_block_header = is_block_header or block_header.lower() in response_ct.lower()
-        # if is_block_header:
-        #     return
-        if "text/html" not in response_ct.lower():
+
+        if "html" not in response_ct.lower():
             return
         # Url Body 参数注入
 
         parser = dictdata_parser(self.dictdata)
+        parser.getresponsebody()
         params_url = self.dictdata.get("request").get("params").get("params_url")
         params_body = self.dictdata.get("request").get("params").get("params_body")
         params_tests = {}
@@ -63,9 +59,10 @@ class POC():
         if params_tests:
             for params_type, params_ in params_tests.items():
                 for param in params_:
-                    test_str = get_random_str(10).lower()
-                    res_random_str, r = check(parser, param, -1, test_str, test_str, 0, params_type, [test_str])
+                    test_str = get_random_str(8).lower()
+                    res_random_str, r = check(parser, param, -1, test_str, test_str, {}, params_type, [test_str])
                     if res_random_str:
+                        random_context=getposition(r.content,test_str.encode())
                         occurences = htmlparser(r.text, test_str)
                         if occurences:
                             positions = list(occurences.keys())
@@ -87,8 +84,8 @@ class POC():
                                             for p, show in payloads:
                                                 payload = p.format(random_str)
                                                 show_formated = [show_.format(random_str) for show_ in show]
-                                                res, r_data = check(parser, param, num, payload, random_str, positions,
-                                                                    params_type, show_formated)
+                                                res, r_data = check(parser, param, num, payload, random_str, occurences,
+                                                                    params_type, show_formated,random_context)
                                                 if res:
                                                     flag=True
                                                     payload = payload.replace(random_str, "alert(1)")
@@ -98,25 +95,25 @@ class POC():
                                     #针对出现在name,flag 情况，详情看xss/common.py ,使用>闭合
                                     if occurences[positions[num]]["details"]["type"] in ["name","flag"] :
                                         payload_pre = ">"
-                                        if self.xss_withpayload(parser, param, num, payload_pre, positions,
-                                                                params_type):
+                                        if self.xss_withpayload(parser, param, num, payload_pre, occurences,
+                                                                params_type,random_context):
                                             flag = True
                                     #针对在value里面，通过'"`闭合
                                     if occurences[positions[num]]["details"]["type"]=="value" and not flag:
                                         can_use_tag, can_close, can_use_attr = False, False, False
                                         random_str = get_random_str(8).lower()
                                         payload_tag = "<{}>".format(random_str)
-                                        if check(parser, param, num, payload_tag, random_str, positions, params_type)[0]:
+                                        if check(parser, param, num, payload_tag, random_str, occurences, params_type,None,random_context)[0]:
                                             can_use_tag = True
                                         random_str = get_random_str(8).lower()
                                         payload_close = "{}>{}".format(occurences[positions[num]]["details"]["quote"],
                                                                        random_str)
-                                        if check(parser, param, num, payload_close, random_str, positions, params_type)[0]:
+                                        if check(parser, param, num, payload_close, random_str, occurences, params_type,None,random_context)[0]:
                                             can_close = True
                                         random_str = get_random_str(8).lower()
                                         payload_attr = "{}{}=".format(occurences[positions[num]]["details"]["quote"],
                                                                       random_str)
-                                        if check(parser, param, num, payload_attr, random_str, positions, params_type)[0]:
+                                        if check(parser, param, num, payload_attr, random_str, occurences, params_type,None,random_context)[0]:
                                             can_use_attr = True
                                         if can_use_attr:
                                             random_str = get_random_str(8).lower()
@@ -126,8 +123,8 @@ class POC():
                                                 show_formated = [
                                                     "{} {}".format(occurences[positions[num]]["details"]["quote"],
                                                                    show_.format(random_str)) for show_ in show]
-                                                res, r_data = check(parser, param, num, payload, random_str, positions,
-                                                                    params_type, show_formated)
+                                                res, r_data = check(parser, param, num, payload, random_str, occurences,
+                                                                    params_type, show_formated,random_context)
                                                 if res:
                                                     payload = payload.replace(random_str, "prompt(1)") + "//"
                                                     self.save(r_data, param, payload)
@@ -146,8 +143,8 @@ class POC():
                                                 show_formated = [
                                                     "{}>{}".format(occurences[positions[num]]["details"]["quote"],
                                                                    show_.format(random_str)) for show_ in show]
-                                                res, r_data = check(parser, param, num, payload, random_str, positions,
-                                                                    params_type, show_formated)
+                                                res, r_data = check(parser, param, num, payload, random_str, occurences,
+                                                                    params_type, show_formated,random_context)
                                                 if res:
                                                     payload = payload.replace(random_str, "prompt(1)")
                                                     self.save(r_data, param, payload)
@@ -164,13 +161,13 @@ class POC():
                                     badtag = occurences[positions[num]]["details"].get("badTag", "")
                                     if not badtag:
                                         payload_pre = ""
-                                        if self.xss_withpayload(parser, param, num, payload_pre, positions,
-                                                                params_type):
+                                        if self.xss_withpayload(parser, param, num, payload_pre, occurences,
+                                                                params_type,random_context):
                                             flag = True
                                     if not flag:
                                         payload_pre = "</"+badtag+">"
-                                        if self.xss_withpayload(parser, param, num, payload_pre, positions,
-                                                                params_type):
+                                        if self.xss_withpayload(parser, param, num, payload_pre, occurences,
+                                                                params_type,random_context):
                                             flag = True
                                     if not flag:
                                         msg_low_level.append(
@@ -178,8 +175,8 @@ class POC():
 
                                 if occurences[positions[num]]["context"] == "comment":
                                     for payload_pre in ("-->", "--!>"):
-                                        if self.xss_withpayload(parser, param, num, payload_pre, positions,
-                                                                params_type):
+                                        if self.xss_withpayload(parser, param, num, payload_pre, occurences,
+                                                                params_type,random_context):
                                             flag = True
                                             break
                                     if not flag:
@@ -196,8 +193,8 @@ class POC():
                                             for payload, show_formated in [
                                                 ("*/;{};/*".format(random_str), ["*/;{};/*".format(random_str)])
                                             ]:
-                                                res, r_data = check(parser, param, num, payload, random_str, positions,
-                                                                    params_type, show_formated)
+                                                res, r_data = check(parser, param, num, payload, random_str, occurences,
+                                                                    params_type, show_formated,random_context)
                                                 if res:
                                                     payload = payload.replace(random_str, "prompt(1)") + "//"
                                                     self.save(r_data, param, payload)
@@ -208,8 +205,8 @@ class POC():
                                             for payload, show_formated in [
                                                 ("\n;{};//".format(random_str), ["\n;{};//".format(random_str)])
                                             ]:
-                                                res, r_data = check(parser, param, num, payload, random_str, positions,
-                                                                    params_type, show_formated)
+                                                res, r_data = check(parser, param, num, payload, random_str, occurences,
+                                                                    params_type, show_formated,random_context)
                                                 if res:
                                                     payload = payload.replace(random_str, "prompt(1)") + "//"
                                                     self.save(r_data, param, payload)
@@ -221,8 +218,8 @@ class POC():
                                             random_str = get_random_str(8).lower()
                                             payload = "{}-{}-{}".format(quote, random_str,quote)
                                             show_formated = [payload]
-                                            res, r_data = check(parser, param, num, payload, random_str, positions,
-                                                                params_type, show_formated)
+                                            res, r_data = check(parser, param, num, payload, random_str, occurences,
+                                                                params_type, show_formated,random_context)
                                             if res:
                                                 payload_=[]
                                                 for x,y in enumerate(["{}-{}//".format(quote, "prompt(1)"),payload.replace(random_str, "prompt(1)")]):
@@ -232,8 +229,8 @@ class POC():
                                     if not flag:
 
                                         payload_pre = "</ScRiPt>"
-                                        if self.xss_withpayload(parser, param, num, payload_pre, positions,
-                                                                params_type):
+                                        if self.xss_withpayload(parser, param, num, payload_pre, occurences,
+                                                                params_type,random_context):
                                             flag = True
 
                                     if not flag:
@@ -258,13 +255,14 @@ class POC():
             }
         })
 
-    def xss_withpayload(self, parser, param, num, payload_pre, positions, params_type):
+    def xss_withpayload(self, parser, param, num, payload_pre, occurences, params_type,random_context):
         flag = False
         random_str = get_random_str(8).lower()
         payload = payload_pre + "<{}>".format(random_str)
         show_formated = [payload]
-        res, r_data = check(parser, param, num, payload, random_str, positions,
-                            params_type, show_formated)
+        res, r_data = check(parser, param, num, payload, random_str, occurences,
+                            params_type, show_formated,random_context)
+        # print("payload {} ,show:{}, res:{}".format(payload,show_formated,res))
         if res:
             for p, show_formated in tag_payloads:
                 random_str = get_random_str(8).lower()
@@ -272,8 +270,8 @@ class POC():
                 show_formated = [(payload_pre + s).format(random_str) for s in
                                  show_formated]
                 res, r_data = check(parser, param, num, payload, random_str,
-                                    positions,
-                                    params_type, show_formated)
+                                    occurences,
+                                    params_type, show_formated,random_context)
                 if res:
                     p=payload.replace(random_str, "prompt(1)")
                     payload = [p,p + "//"]

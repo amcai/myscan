@@ -23,7 +23,7 @@ class POC():
         self.similar_min = 0.95  # 最小相似度
 
     def verify(self):
-        if self.dictdata.get("url").get("extension") not in ['js', 'css', 'png', 'gif', 'svg']:
+        if self.dictdata.get("url").get("extension").lower() not in ['js', 'css', 'png', 'gif', 'svg']:
             parser = dictdata_parser(self.dictdata)
             request_headers_forpayload = self.delcookie_token()
             req = {
@@ -32,7 +32,7 @@ class POC():
                 "params": parser.getrequestparams_urlorcookie("url"),
                 "headers": request_headers_forpayload,
                 "data": parser.getrequestbody(),
-                "timeout": 5,
+                "timeout": 10,
                 "verify": False,
                 "allow_redirects": False,
             }

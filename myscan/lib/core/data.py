@@ -14,3 +14,5 @@ logger = Logger(logger="myscan")
 conn = AttribDict()
 
 count = AttribDict()
+
+others= AttribDict()

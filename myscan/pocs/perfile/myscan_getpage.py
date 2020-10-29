@@ -21,7 +21,7 @@ class POC():
             "method": "GET",
             "url": self.url,
             "headers": self.dictdata.get("request").get("headers"),
-            "timeout": 5,
+            "timeout": 10,
             "verify": False,
             "allow_redirects": True,
         }

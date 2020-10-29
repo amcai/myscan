@@ -4,13 +4,17 @@
 # @File    : common.py
 import os
 import redis
+import re
+import ipaddress
 from random import sample
 from urllib import parse
 import sys
-from myscan.lib.core.data import paths, conn, cmd_line_options,logger
+from myscan.lib.core.data import paths, conn, cmd_line_options, logger
 import difflib
 import hashlib
 import base64
+import json
+import requests
 
 
 def redis_conn():
@@ -27,8 +31,8 @@ def redis_conn():
                 port = 6379
                 db = 0
             logger.info("Redis connection args: pwd:{},ip:{},port:{},db:{}".format(pwd, ip, port, db))
-            conn.redis = redis.ConnectionPool(host=ip, password=pwd, port=int(port), db=int(db))
-            red=getredis()
+            conn.redis = redis.ConnectionPool(max_connections=300, host=ip, password=pwd, port=int(port), db=int(db))
+            red = getredis()
 
 
     else:
@@ -36,6 +40,8 @@ def redis_conn():
         error_msg = "Please use --redis pass@host:port:db ,if pass is none ,like --redis @host:port:db"
         logger.warning(error_msg)
         sys.exit()
+
+
 def set_paths(root_path):
     """
     Sets absolute paths for project directories and files
@@ -46,8 +52,9 @@ def set_paths(root_path):
     # paths.MYSCAN_MOUDLE_PATH = os.path.join(paths.MYSCAN_ROOT_PATH, "moudle")
     paths.MYSCAN_POCS_PATH = os.path.join(paths.MYSCAN_ROOT_PATH, "pocs")
     paths.MYSCAN_REPORT_PATH = os.path.join(paths.MYSCAN_ROOT_PATH, "report")
-    paths.USER_POCS_PATH = None
 
+    paths.USER_POCS_PATH = None
+    paths.MYSCAN_HOSTSCAN_BIN = os.path.join(paths.MYSCAN_ROOT_PATH, "lib", "bin")
     paths.SENSETIVE_DIR = os.path.join(paths.MYSCAN_DATA_PATH, "sensetive-dir.txt")
     paths.WEAK_PASS = os.path.join(paths.MYSCAN_DATA_PATH, "password-top100.txt")
     paths.LARGE_WEAK_PASS = os.path.join(paths.MYSCAN_DATA_PATH, "password-top1000.txt")
@@ -71,7 +78,7 @@ def get_random_str(nums):
 
 
 def get_random_num(nums):
-    return int(''.join(sample("123456789", int(nums))))
+    return int(''.join(sample("123456789" * (int(nums // 9) + 1), int(nums))))
 
 
 def banner():
@@ -87,11 +94,11 @@ def banner():
 
 
 def similar(text1, text2):
-    return difflib.SequenceMatcher(None, text1, text2).quick_ratio()
+    min_len=min(len(text1),len(text2))
+    return difflib.SequenceMatcher(None, text1[:min_len], text2[:min_len]).quick_ratio()
 
 
 def getredis():
-    #此处windows linux的一个坑，windows不能多进程 共享socket
 
     return redis.StrictRedis(connection_pool=conn.redis)
 
@@ -102,30 +109,60 @@ def gethostportfromurl(url):
     '''
     port = 80
     r = parse.urlparse(url)
-    if ":" not in r.netloc:
-        if r.scheme == "https":
-            port = 443
-    else:
-        h, p = r.netloc.split(":")
-        return h, int(p)
-    return r.netloc, port
+    netloc=re.search(r"(^[0-9a-z\-\.]+$)|(^[0-9a-z\-\.]+:\d+)", r.netloc, re.I)
+    if netloc:
+        netloc=netloc.group()
+        if ":" not in netloc:
+            if r.scheme == "https":
+                port = 443
+        else:
+            h, p = netloc.split(":",1)
+            return h, int(p)
+        return r.netloc, port
+
+    return url,0
+
+
 def getmd5(s):
     m = hashlib.md5()
-    if not isinstance(s,str):
-        s=str(s)
+    if not isinstance(s, str):
+        s = str(s)
     b = s.encode(encoding='utf-8')
     m.update(b)
     return m.hexdigest()
+
+
 def is_base64(value: str):
-    if isinstance(value,str):
-        value=value.encode()
+    if isinstance(value, str):
+        value = value.encode()
     try:
-        res=base64.b64decode(value)
+        res = base64.b64decode(value)
         return res.decode().isprintable()
     except Exception as ex:
         print(ex)
         return False
-def verify_param(param,new,method="a"):
+
+
+def escapeJsonValue(value):
+    value = str(value)
+    """
+    Escapes JSON value (used in payloads)
+
+    # Reference: https://stackoverflow.com/a/16652683
+    """
+
+    retVal = ""
+
+    for char in value:
+        if char < ' ' or char == '"':
+            retVal += json.dumps(char)[1:-1]
+        else:
+            retVal += char
+
+    return retVal
+
+
+def verify_param(param, new, method="a", body=b"", bodyoffset=0):
     '''
     处理新添加的值
     burp大哥这么说的:
@@ -159,26 +196,78 @@ def verify_param(param,new,method="a"):
      */
     static final byte PARAM_JSON = 6;
     '''
-    if param.get("type")==1:   #body,主动url编码
-        if method=="a":
-            value=parse.quote(parse.unquote(param.get("value"))+new)
+    if isinstance(new, bytes) or isinstance(new, bytearray):
+        new = new.decode()
+    if not isinstance(new, str):
+        new = str(new)
+    if param.get("type") == 1:  # body,主动url编码
+        if method == "a":
+            value = parse.quote(parse.unquote(param.get("value")) + new)
         else:
-            value=parse.quote(new)
+            value = parse.quote(new)
         return value
-    if param.get("type") in [0,2]:   #cookie ,url ，request会自动url编码
-        if method=="a":
-            value=parse.unquote(param.get("value"))+new
+    if param.get("type") in [0, 2]:  # cookie ,url ，request会自动url编码
+        if method == "a":
+            value = parse.unquote(param.get("value")) + new
         else:
-            value=new
+            value = new
         return value
-    if param.get("type")>2: #xml,json等不编码，按理说json要把"等转义，后头再弄
-        if method=="a":
-            value=param.get("value")+new
+    if param.get("type") in [3, 4, 5]:
+        if method == "a":
+            value = param.get("value") + new.replace('>', "&gt;").replace('<', "&lt;")
         else:
-            value=new
+            value = new.replace('>', "&gt;").replace('<', "&lt;")
         return value
+    if param.get("type") == 6:
+        s_value = param.get("value", "")
+        st = param.get("valuestart") - bodyoffset
+        symbol = body[st - 1:st]
+        if symbol == b'"':
+            if method == "a":
+                value = s_value + escapeJsonValue(new)
+            else:
+                value = escapeJsonValue(new)
+            return value
+        else:
+            double_str = '"'
+            if method == "a":
+                value = double_str + s_value + escapeJsonValue(new) + double_str
+            else:
+                value = double_str + escapeJsonValue(new) + double_str
+
+            return value
 
 
+def is_ipaddr(host):
+    '''
+    判断是否是ip格式
+    '''
+    try:
+        ipaddress.ip_address(str(host))
+        return True
+    except Exception as ex:
+        return False
 
 
-
+def get_error_page(dictdata, allow_redirects=False,extension=""):
+    red = getredis()
+    key = "error_page_{protocol}_{host}_{port}_{ext}".format(**dictdata["url"],ext=extension)
+    res = red.get(key)
+    if res:
+        return res
+    else:
+        req = {
+            "method": "GET",
+            "url": "{protocol}://{host}:{port}/".format(**dictdata["url"]) + get_random_str(6)+extension,
+            "timeout": 10,
+            "verify": allow_redirects,
+            "allow_redirects": False
+        }
+        r = None
+        try:
+            r = requests.request(**req)
+        except:
+            pass
+        if r is not None:
+            red.set(key, r.content)
+            return r.content

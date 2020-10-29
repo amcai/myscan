@@ -27,7 +27,7 @@ class POC():
         self.level = 1  # 0:Low  1:Medium 2:High
 
     def verify(self):
-        if self.dictdata.get("url").get("extension") in notAcceptedExt:
+        if self.dictdata.get("url").get("extension").lower() in notAcceptedExt:
             return
         parser = dictdata_parser(self.dictdata)
 
@@ -85,7 +85,7 @@ class POC():
         for search in ["<meta[^>]*?url[\s]*?=[\s'\"]*?([^>]*?)['\"]?>", "href[\s]*?=[\s]*?['\"](.*?)['\"]",
                        "window.open\(['\"](.*?)['\"]\)", "window.navigate\(['\"](.*?)['\"]\)"]:
             for x in re.findall(search, text, re.I):
-                if x.strip() and randomstr in x.split("?", 1)[0]:  # 确保在url头，不在参数里
+                if x.strip() and x.strip().startswith("http") and randomstr in x.split("?", 1)[0]:  # 确保在url头，不在参数里
                     return x, search
         return None, None
 
@@ -94,13 +94,13 @@ class POC():
         for k, v in r.headers.items():
             if "location" in k.lower():
                 text = v.strip()
-        if randomstr in text.split("?")[0]:
+        if text.strip().startswith("http") and randomstr in text.split("?")[0]:
             return True
         return False
 
     def isneedtest(self, param):
         name = param.get("name", "")
-        if name is not "":
+        if name != "":
             for key in URL_ARGS:
                 if name.lower() in key.lower():
                     return True

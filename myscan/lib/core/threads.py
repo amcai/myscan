@@ -5,8 +5,6 @@
 import threading
 from queue import Queue
 from myscan.lib.core.data import logger
-from time import sleep
-from random import uniform
 
 
 def mythread(func, mapslist, thread_num):
@@ -34,7 +32,7 @@ class tThread(threading.Thread):
         while not self.queue.empty():
             arg = self.queue.get()
             try:
-                sleep(uniform(0, 0.2))
                 self.func(arg)
             except Exception as e:
                 logger.warning("run thread error:{}".format(str(e)))
+                # traceback.print_exc()

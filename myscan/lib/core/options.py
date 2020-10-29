@@ -3,16 +3,19 @@
 # @Author  : caicai
 # @File    : options.py
 import copy
-from myscan.lib.core.data import cmd_line_options, logger, paths
+from myscan.lib.core.data import cmd_line_options, logger, paths, others
 import logging
 import os
 import sys
 from myscan.lib.parse.cmd_line_parser import cmd_line_parser
-from urllib import parse
 from myscan.lib.core.common import banner
 from myscan.lib.core.common_reverse import check_reverse
 from myscan.lib.core.register import load_file_to_module
-
+from myscan.lib.scriptlib.ssti.importssti import importssti
+from myscan.config import plugin_set
+from myscan.lib.core.conn import set_es_conn
+from myscan.lib.patch.paramiko_patch import patch_banner_timeout
+from myscan.lib.patch.ipv6_patch import ipv6_patch
 
 def init_options():
     cmd_line_options.update(cmd_line_parser().__dict__)
@@ -21,15 +24,17 @@ def init_options():
         print(banner())
         sys.exit()
     print(banner())
-    #判断check-reveres
+    # 判断check-reveres
     if cmd_line_options.check_reverse:
         check_reverse()
         sys.exit()
+    if cmd_line_options.command == "reverse":
+        return
     # 此处需要改进，添加判读，容错，和sock代理等
     if cmd_line_options.proxy:
         host_port = cmd_line_options.proxy
-        cmd_line_options.proxy = {"http": "http://" + host_port,
-                                  "https": "https://" + host_port,
+        cmd_line_options.proxy = {"http": "http://{}".format(host_port),
+                                  "https": "https://{}".format(host_port),
                                   }
     else:
         cmd_line_options.proxy = {}
@@ -43,102 +48,144 @@ def init_options():
         logger.logger.setLevel(logging.CRITICAL)
 
     # 处理html-output
+    logger.info("Vuln results will output to: {}".format(cmd_line_options.html_output))
+
+    cmd_line_options.allow_poc = []
+    cmd_line_options.pocs_perfile = []
+    cmd_line_options.pocs_perfoler = []
+    cmd_line_options.pocs_perscheme = []
+    cmd_line_options.pocs_perserver = []
+    cmd_line_options.pocs_load_moudle = {
+        "perfile": {},
+        "perfolder": {},
+        "perscheme": {},
+        "perserver": {}
+    }
+    poc_keys = {
+        "perfile": cmd_line_options.pocs_perfile,
+        "perfolder": cmd_line_options.pocs_perfoler,
+        "perscheme": cmd_line_options.pocs_perscheme,
+        "perserver": cmd_line_options.pocs_perserver
+    }
     if cmd_line_options.command == "webscan":
-        logger.info("Vuln results will output to: {}".format(cmd_line_options.html_output))
+        cmd_line_options.poc_folders = ["perfile", "perfolder", "perscheme"]
+    if cmd_line_options.command == "hostscan":
+        cmd_line_options.poc_folders = ["perserver"]
+    if "all" not in cmd_line_options.disable:
+        if cmd_line_options.disable:
+            cmd_line_options.enable = None
+            for _dir in cmd_line_options.poc_folders:
+                # old way
+                # path_dir = os.path.join(paths.MYSCAN_POCS_PATH, _dir)
+                # exists_poc_with_ext = list(
+                #     filter(lambda x: not x.startswith("__"), os.listdir(path_dir)))
+                # temp = copy.deepcopy(exists_poc_with_ext)
+                # for disable in cmd_line_options.disable:
+                #     for poc in exists_poc_with_ext:
+                #         if disable in poc and poc in temp:
+                #             temp.remove(poc)
+                # for x in temp:
+                #     poc_keys.get(_dir).append(os.path.join(path_dir, x))
 
-        # if os.path.exists(cmd_line_options.html_output):
-        #     logger.warning(
-        #         "file {} already exists, please backup and remove it at first".format(cmd_line_options.html_output))
-        #     sys.exit()
-        # else:
-        #     try:
-        #         with open(cmd_line_options.html_output, "w") as f:
-        #             f.write(gethtmlheader())
-        #     except Exception as ex:
-        #         logger.warning("Create file {} get error:{}".format(cmd_line_options.html_output, ex))
-        #         sys.exit()
+                # new way to get subdir
+                for root, dirs, files in os.walk(os.path.join(paths.MYSCAN_POCS_PATH, _dir)):
+                    for file in files:
+                        if file.endswith(".py") and not file.startswith("__"):
+                            if not any([disable in file for disable in cmd_line_options.disable ]):
+                                poc_keys.get(_dir).append(os.path.abspath(os.path.join(root, file)))
+        else:
+            for _dir in cmd_line_options.poc_folders:
+                # path_dir = os.path.join(paths.MYSCAN_POCS_PATH, _dir)
+                # exists_poc_with_ext = list(
+                #     filter(lambda x: (not x.startswith("__") and x.endswith(".py")),
+                #            os.listdir(path_dir)))
+                # if "*" == cmd_line_options.enable:
+                #     for poc in exists_poc_with_ext:
+                #         poc_keys.get(_dir).append(os.path.join(path_dir, poc))
+                # else:
+                #     for disable in cmd_line_options.enable:
+                #         for poc in exists_poc_with_ext:
+                #             if disable in poc:
+                #                 poc_keys.get(_dir).append(os.path.join(path_dir, poc))
+                for root, dirs, files in os.walk(os.path.join(paths.MYSCAN_POCS_PATH, _dir)):
+                    for file in files:
+                        if file.endswith(".py") and not file.startswith("__"):
+                            if not cmd_line_options.enable:
+                                poc_keys.get(_dir).append(os.path.abspath(os.path.join(root, file)))
+                            else:
+                                if any([enable in file for enable in cmd_line_options.enable]):
+                                    poc_keys.get(_dir).append(os.path.abspath(os.path.join(root, file)))
+                                #
+                                # for enable in cmd_line_options.enable:
+                                #     if enable in file:
+                                #         poc_keys.get(_dir).append(os.path.abspath(os.path.join(root, file)))
 
-        cmd_line_options.allow_poc = []
-        cmd_line_options.pocs_perfile = []
-        cmd_line_options.pocs_perfoler = []
-        cmd_line_options.pocs_perscheme = []
-        cmd_line_options.pocs_load_moudle={
-            "perfile": [],
-            "perfolder": [],
-            "perscheme": []
-        }
-        print(cmd_line_options.disable)
-        if "all" not in cmd_line_options.disable:
-            poc_keys = {
-                "perfile": cmd_line_options.pocs_perfile,
-                "perfolder": cmd_line_options.pocs_perfoler,
-                "perscheme": cmd_line_options.pocs_perscheme
-            }
-
-            if cmd_line_options.disable:
-                cmd_line_options.enable = None
-                for _dir in ["perfile", "perfolder", "perscheme"]:
-                    path_dir = os.path.join(paths.MYSCAN_POCS_PATH, _dir)
-                    exists_poc_with_ext = list(
-                        filter(lambda x: not x.startswith("__"), os.listdir(path_dir)))
-                    temp = copy.deepcopy(exists_poc_with_ext)
-                    for disable in cmd_line_options.disable:
-                        for poc in exists_poc_with_ext:
-                            if disable in poc and poc in temp:
-                                temp.remove(poc)
-                    for x in temp:
-                        poc_keys.get(_dir).append(os.path.join(path_dir, x))
-
-            if cmd_line_options.enable:
-                for _dir in ["perfile", "perfolder", "perscheme"]:
-                    path_dir = os.path.join(paths.MYSCAN_POCS_PATH, _dir)
-                    exists_poc_with_ext = list(
-                        filter(lambda x: (not x.startswith("__") and (x.endswith(".py") or x.endswith(".yaml"))),
-                               os.listdir(path_dir)))
-                    if "*" == cmd_line_options.enable:
-                        for poc in exists_poc_with_ext:
-                            poc_keys.get(_dir).append(os.path.join(path_dir, poc))
-                    else:
-                        for disable in cmd_line_options.enable:
-                            for poc in exists_poc_with_ext:
-                                if disable in poc:
-                                    poc_keys.get(_dir).append(os.path.join(path_dir, poc))
-            for _dir in ["perfile", "perfolder", "perscheme"]:
-                logger.debug("{} total: {} pocs".format(_dir.capitalize(), len(poc_keys.get(_dir))))
-                for poc in poc_keys.get(_dir):
-                    logger.info("Load Pocs:{}".format(poc))
-                    cmd_line_options.pocs_load_moudle[_dir].append(
-                        {
-                            "poc":poc,
-                            "class":load_file_to_module(poc)
-                        }
-                    )
-
-
+        for _dir in cmd_line_options.poc_folders:
+            logger.debug("{} total: {} pocs".format(_dir.capitalize(), len(list(set(poc_keys.get(_dir))))))
+            for poc in list(set(poc_keys.get(_dir))):
+                logger.info("Load Pocs:{}".format(poc))
+                cmd_line_options.pocs_load_moudle[_dir][hash(poc)] = {
+                    "poc": poc,
+                    "class": load_file_to_module(poc)
+                }
+        if cmd_line_options.command == "webscan":
             if not (cmd_line_options.pocs_perfile or cmd_line_options.pocs_perfoler or cmd_line_options.pocs_perscheme):
-                logger.warning("No Pocs ,please use --enable * or like --enable un_auth sqli")
+                logger.warning("No Pocs ,please use  --enable un_auth sqli")
                 sys.exit()
+        if cmd_line_options.command == "hostscan":
+            if not cmd_line_options.pocs_perserver:
+                logger.warning("No Pocs ,please use  --enable brute ms17010")
+                sys.exit()
+    else:
+        logger.warning("No Pocs Load!")
 
-        # plugin 插件参数处理
-        cmd_line_options.open_lugins = []
-        plugins_dir = paths.MYSCAN_PLUGINS_PATH
-        exists_poc_with_ext = list(
-            filter(lambda x: not x.startswith("__"), os.listdir(plugins_dir)))
-        if cmd_line_options.plugins:
-            for openplugin in list(set(cmd_line_options.plugins)):
-                for plugin in exists_poc_with_ext:
-                    if openplugin in plugin:
-                        logger.info("Load Plugin:{}".format(os.path.join(plugins_dir, plugin)))
-                        cmd_line_options.open_lugins.append(os.path.join(plugins_dir, plugin))
+    # languages 插件参数处理
+    cmd_line_options.open_lugins = []
+    plugins_dir = os.path.join(paths.MYSCAN_PLUGINS_PATH, cmd_line_options.command)
+    exists_poc_with_ext = list(
+        filter(lambda x: not x.startswith("__"), os.listdir(plugins_dir)))
+    if cmd_line_options.plugins:
+        for openplugin in list(set(cmd_line_options.plugins)):
+            for plugin in exists_poc_with_ext:
+                if openplugin in plugin:
+                    logger.info("Load Plugin:{}".format(os.path.join(plugins_dir, plugin)))
+                    cmd_line_options.open_lugins.append(os.path.join(plugins_dir, plugin))
 
-    # input_options=cmd_line_parser().__dict__
-    # if hasattr(input_options, "items"):
-    #     input_options_items = input_options.items()
-    # else:
-    #     input_options_items = input_options.__dict__.items()
-    # for key, value in input_options_items:
-    #     if key not in cmd_line_options or value not in (None, False):
-    #         cmd_line_options[key] = value
+    # 处理ssti全局变量
+    importssti()
+
+    # 需要注册一下需要urlpath的插件
+    poc1 = os.path.join(paths.MYSCAN_POCS_PATH, "perfolder", "info","myscan_dirscan.py")
+    if poc1 in cmd_line_options.pocs_perfoler:
+        get_dict()
+
+    # 打补丁
+    # patch_banner_timeout() #好像没用
+    ipv6_patch()
+
+    # 配置连接
+
+    set_es_conn()
+
+    # 配置dishost host
+    if cmd_line_options.host :
+        cmd_line_options.dishost=[]
+
+def get_dict():
+    others.url_dict_path = []
+    if plugin_set.get("dirscan").get("dirfile"):
+        filename = plugin_set.get("dirscan").get("dirfile")
+    else:
+        filename = os.path.join(paths.MYSCAN_DATA_PATH, "dir", "dicc.txt")
+    try:
+        with open(filename) as f:
+            for line in f:
+                line_ = line.strip()
+                if line_:
+                    others.url_dict_path.append(line_)
+    except Exception as ex:
+        logger.warning("dirscan can't open file:{} , get error:{}".format(filename, ex))
+    return others.url_dict_path
 
 
 def gethtmlheader():
@@ -274,10 +321,10 @@ def gethtmlheader():
         }
 
     </style>
-    <link href="https://cdn.bootcss.com/prism/9000.0.1/themes/prism.min.css" rel="stylesheet">
-    <script src="https://cdn.bootcss.com/prism/9000.0.1/prism.min.js" data-manual></script>
-    <script src="https://cdn.bootcss.com/prism/9000.0.1/components/prism-http.min.js"></script>
-    <script src="https://cdn.bootcss.com/prism/9000.0.1/components/prism-javascript.min.js"></script>
+    <link href="htmllib/prism.min.css" rel="stylesheet">
+    <script src="htmllib/prism.min.js" data-manual></script>
+    <script src="htmllib/prism-http.min.js"></script>
+    <script src="htmllib/prism-javascript.min.js"></script>
     <style>
         pre[class*="language-"] {
             padding: .5em;
@@ -419,7 +466,7 @@ def gethtmlheader():
         }
     }
 </script>
-<script src="https://cdn.ravenjs.com/3.19.1/raven.min.js" crossorigin="anonymous"></script>
+<script src="htmllib/raven.min.js" crossorigin="anonymous"></script>
 
 
 <div id="vuln-records">'''

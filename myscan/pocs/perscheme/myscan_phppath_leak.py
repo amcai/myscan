@@ -19,7 +19,7 @@ class POC():
         self.level = 1  # 0:Low  1:Medium 2:High
 
     def verify(self):
-        if self.dictdata.get("url").get("extension")[:3] not in ["php", ""]:
+        if self.dictdata.get("url").get("extension")[:3].lower() not in ["php", ""]:
             return
         parser = dictdata_parser(self.dictdata)
         # url 参数测试

@@ -2,8 +2,9 @@
 # @Time    : 2020-02-14
 # @Author  : caicai
 # @File    : dictdata_parser.py
-from myscan.lib.core.common import getredis,verify_param
+from myscan.lib.core.common import getredis,verify_param,getmd5
 import copy, base64
+from urllib import parse
 
 
 class dictdata_parser():
@@ -32,6 +33,10 @@ class dictdata_parser():
 
         return "{protocol}://{host}:{port}{path}".format(**self.url)
 
+    def getrootpath(self):
+
+        return "{protocol}://{host}:{port}".format(**self.url)
+
     def getperfile(self):
         '''
         return string
@@ -58,7 +63,7 @@ class dictdata_parser():
         '''
         return bool
         '''
-        hashstr = hash(self.getperfile())
+        hashstr = getmd5(self.getperfile())[10:20]
         if not self.red.sismember(self.keys.get("perfile"), hashstr):
             self.red.sadd(self.keys.get("perfile"), hashstr)
             return False
@@ -73,7 +78,7 @@ class dictdata_parser():
         if not folders:
             return []
         for folder in folders:
-            hashstr = hash(folder)
+            hashstr = getmd5(folder)[10:20]
             if not self.red.sismember(self.keys.get("perfolder"), hashstr):
                 self.red.sadd(self.keys.get("perfolder"), hashstr)
                 res.append(folder)
@@ -101,11 +106,11 @@ class dictdata_parser():
         '''
         method = self.dictdata.get("request").get("method")
         urlpath = self.dictdata.get("url").get("path")
-        host = self.dictdata.get("url").get("path")
+        host = self.dictdata.get("url").get("host")
         protocol = self.dictdata.get("url").get("protocol")
         port = self.dictdata.get("url").get("port")
         argsname = "".join(self.getallargs())
-        hashstr = hash("{}{}{}{}{}{}".format(protocol, host, port, method, urlpath, argsname))
+        hashstr = getmd5("{}{}{}{}{}{}".format(protocol, host, port, method, urlpath, argsname))
         if not self.red.sismember(self.keys.get("perscheme"), hashstr):
             self.red.sadd(self.keys.get("perscheme"), hashstr)
             return False
@@ -135,7 +140,7 @@ class dictdata_parser():
         if params:
             resdict = {}
             for param in params:
-                resdict[param.get("name")] = param.get("value")
+                resdict[parse.unquote(param.get("name"))] = parse.unquote(param.get("value"))
             return copy.deepcopy(resdict)
         else:
             return {}
@@ -155,7 +160,7 @@ class dictdata_parser():
         if not body:
             return body
         else:
-            value=verify_param(param,text,method).encode()
+            value=verify_param(param,text,method,body,self.request_bodyoffset).encode()
             st = param.get("valuestart") - self.request_bodyoffset
             et = param.get("valueend") - self.request_bodyoffset
             bodyarray = bytearray(body)
@@ -205,7 +210,7 @@ class dictdata_parser():
         if not params:
             return {}
         else:
-            value=verify_param(param,text,method)
+            value=verify_param(param,text,method,self.getrequestbody(),self.request_bodyoffset)
             newparams_url = copy.deepcopy(params)
             newparams_url[param.get("name")] = value
             return newparams_url
@@ -223,7 +228,7 @@ class dictdata_parser():
             params_or_data = self.getrequestparams_urlorcookie("cookie")
         else:
             params_or_data =self.getrequestbody()
-        value=verify_param(param,text,method)
+        value=verify_param(param,text,method,self.getrequestbody(),self.request_bodyoffset)
         if param.get("type")==2:
             newparams_url = copy.deepcopy(params_or_data)
             newparams_url[param.get("name")] = value
@@ -262,7 +267,7 @@ class dictdata_parser():
             "params": self.getrequestparams_urlorcookie("url"),
             "headers": copy.deepcopy(self.dictdata.get("request").get("headers")),
             "data": self.getrequestbody(),
-            "timeout": 5,
+            "timeout": 10,
             "verify": False,
             "allow_redirects": False,
         }

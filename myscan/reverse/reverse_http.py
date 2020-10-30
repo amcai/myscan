@@ -11,6 +11,30 @@ from myscan.lib.core.data import logger
 from myscan.lib.core.common_reverse import insert_db
 
 app = Flask(__name__)
+@app.errorhandler(404)
+def page_not_found(e):
+    data=request.path[1:]
+    if data.startswith("myscan_"):
+        if data:
+            try:
+                info = ""
+                try:
+                    info = binascii.a2b_hex(data[7:].encode()).decode()
+                except:
+                    pass
+                res = {}
+                res["type"] = "http"
+                res["client"] = request.remote_addr
+                res["query"] = data
+                res["info"] = info
+                res["time"] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+                logger.info("Insert to db:" + str(res))
+                insert_db(res)
+                return json.dumps({"status": "success"})
+            except Exception as ex:
+                logger.warning("scan index d get error:{}".format(ex))
+                pass
+    return json.dumps({"status": "fail", "reason": ""})
 
 
 @app.before_request

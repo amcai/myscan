@@ -3,6 +3,7 @@
 # @Author  : caicai
 # @File    : threads.py
 import threading
+# import traceback
 from queue import Queue
 from myscan.lib.core.data import logger
 

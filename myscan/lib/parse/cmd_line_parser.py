@@ -20,15 +20,15 @@ def cmd_line_parser(argv=None):
     parser = argparse.ArgumentParser(prog='myscan', usage=usage)
     try:
         parser.add_argument("command", choices=("webscan", "hostscan", "reverse"), type=str,
-                            help="select a mode to run ,accept webscan , hostscan, reverse  ")
+                            help="选择一个模式，接受 webscan , hostscan, reverse  ")
         parser.add_argument("--version", dest="show_version", action="store_true",
-                            help="Show program's version number and exit")
+                            help="显示版本号并退出")
 
         conn = parser.add_argument_group('Connect', "At least one of these "
                                                     "options has to be provided to define the target(s)")
         conn.add_argument("--redis", dest="redis", default="@127.0.0.1:6379:0",
-                          help="connect redis host (e.g. \"--redis password@host:port:db\"),default: null@127.0.0.1:6379:0")
-        common = parser.add_argument_group('Common', "Config common args")
+                          help="连接redis主机 (e.g. \"--redis password@host:port:db\"),默认: null@127.0.0.1:6379:0")
+        common = parser.add_argument_group('Common', "一般配置")
         # 0:debug 蓝色cyan,1:info 绿色，2:error 黄色，3:critical：红色
         common.add_argument("-v", "--verbose", dest="verbose", type=int, default=1, choices=list(range(4)),
                             help="0 ==> Show :all(debug,info,error,critical .1 ==> Show: info,error,critical 2 ==> Show: error,critical"
@@ -61,9 +61,9 @@ def cmd_line_parser(argv=None):
 
         request = parser.add_argument_group('Request', "配置请求参数")
         request.add_argument("--retry", dest="retry", type=int, default=0, help="定义全局request出错后重新尝试请求次数，默认0")
-        request.add_argument("--ipv6", dest="ipv6", action="store_true", help="使用此参数优先ipv6地址,ipv6无记录再使用ipv4地址")
+        request.add_argument("--ipv6", dest="ipv6", action="store_true", help="需网络支持ipv6，使用此参数优先ipv6地址,ipv6无记录再使用ipv4地址")
 
-        request.add_argument("--cookie", dest="cookie", default=None, help="测试越权使用cookie，一般为低权限cookie")
+        # request.add_argument("--cookie", dest="cookie", default=None, help="测试越权使用cookie，一般为低权限cookie")
         # request.add_argument("--timeout", dest="timeout", type=int, default=None,
         #                      help="定义全局request的超时，默认使用poc脚本自定义超时或request默认超时")
         plugin = parser.add_argument_group('Plugin', "对流量进行收集的插件")

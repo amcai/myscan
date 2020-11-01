@@ -271,3 +271,12 @@ def get_error_page(dictdata, allow_redirects=False,extension=""):
         if r is not None:
             red.set(key, r.content)
             return r.content
+def isjson( arg, quote=True):
+    try:
+        if not arg:
+            return False
+        if quote:
+            arg = parse.unquote(arg)
+        return json.loads(arg)
+    except:
+        return False

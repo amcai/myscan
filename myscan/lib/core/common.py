@@ -94,12 +94,11 @@ def banner():
 
 
 def similar(text1, text2):
-    min_len=min(len(text1),len(text2))
+    min_len = min(len(text1), len(text2))
     return difflib.SequenceMatcher(None, text1[:min_len], text2[:min_len]).quick_ratio()
 
 
 def getredis():
-
     return redis.StrictRedis(connection_pool=conn.redis)
 
 
@@ -109,18 +108,18 @@ def gethostportfromurl(url):
     '''
     port = 80
     r = parse.urlparse(url)
-    netloc=re.search(r"(^[0-9a-z\-\.]+$)|(^[0-9a-z\-\.]+:\d+)", r.netloc, re.I)
+    netloc = re.search(r"(^[0-9a-z\-\.]+$)|(^[0-9a-z\-\.]+:\d+)", r.netloc, re.I)
     if netloc:
-        netloc=netloc.group()
+        netloc = netloc.group()
         if ":" not in netloc:
             if r.scheme == "https":
                 port = 443
         else:
-            h, p = netloc.split(":",1)
+            h, p = netloc.split(":", 1)
             return h, int(p)
         return r.netloc, port
 
-    return url,0
+    return url, 0
 
 
 def getmd5(s):
@@ -249,16 +248,16 @@ def is_ipaddr(host):
         return False
 
 
-def get_error_page(dictdata, allow_redirects=False,extension=""):
+def get_error_page(dictdata, allow_redirects=False, extension=""):
     red = getredis()
-    key = "error_page_{protocol}_{host}_{port}_{ext}".format(**dictdata["url"],ext=extension)
+    key = "error_page_{protocol}_{host}_{port}_{ext}".format(**dictdata["url"], ext=extension)
     res = red.get(key)
     if res:
         return res
     else:
         req = {
             "method": "GET",
-            "url": "{protocol}://{host}:{port}/".format(**dictdata["url"]) + get_random_str(6)+extension,
+            "url": "{protocol}://{host}:{port}/".format(**dictdata["url"]) + get_random_str(6) + extension,
             "timeout": 10,
             "verify": allow_redirects,
             "allow_redirects": False
@@ -271,8 +270,15 @@ def get_error_page(dictdata, allow_redirects=False,extension=""):
         if r is not None:
             red.set(key, r.content)
             return r.content
-def isjson( arg, quote=True):
+
+
+def isjson(arg, quote=True):
+    '''
+    arg: string
+    '''
     try:
+        if arg.isdigit():
+            return False
         if not arg:
             return False
         if quote:

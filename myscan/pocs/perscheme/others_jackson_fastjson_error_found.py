@@ -8,6 +8,8 @@ from myscan.lib.parse.dictdata_parser import dictdata_parser  # 写了一些操�
 from myscan.lib.parse.response_parser import response_parser  ##写了一些操作resonse的方法的类
 from myscan.lib.helper.request import request  # 修改了requests.request请求的库，建议使用此库，会在redis计数
 from myscan.lib.core.base import PocBase
+from myscan.lib.core.const import notAcceptedExt
+from myscan.lib.core.common import isjson
 
 
 class POC(PocBase):
@@ -18,20 +20,35 @@ class POC(PocBase):
         self.name = "jackson_fastjson_found"
         self.vulmsg = "可尝试反序列化payload"
         self.level = 1  # 0:Low  1:Medium 2:High
+        self.success = False
 
     def verify(self):
-        if not self.dictdata.get("request").get("content_type") == 4:  # data数据类型为json
+        if self.dictdata.get("url").get("extension") in notAcceptedExt:
             return
-        parse = dictdata_parser(self.dictdata)
+        self.parse = dictdata_parser(self.dictdata)
 
-        if not self.can_output(parse.getrootpath() + self.name):  # 限定只输出一次
+        if not self.can_output(self.parse.getrootpath() + self.name):  # 限定只输出一次
             return
+        # body 为json格式
+        if self.dictdata.get("request").get("content_type") == 4:  # data数据类型为json
+            body = self.parse.getrequestbody()
+            req = self.parse.generaterequest({"data": body.replace(b"}", b"", 1)})
+            self.generate(req)
+        # 针对参数为json格式
+        if self.success:
+            return
+        params = self.dictdata.get("request").get("params").get("params_url") + \
+                 self.dictdata.get("request").get("params").get("params_body")
+        for param in params:
+            arg = param.get("value", "")
+            if isjson(arg):
+                req = self.parse.getreqfromparam(param, "w", arg.replace("}", "", 1))
+                self.generate(req)
 
-        body = parse.getrequestbody()
-        req = parse.generaterequest({"data": body.replace(b"}", b"",1)})
+    def generate(self, req):
         r = request(**req)
         if r != None:
-            keys = ["jackson", "fastjson","autotype"]
+            keys = ["jackson", "fastjson", "autotype"]
             for key in keys:
                 if key.encode() in r.content.lower():
                     parser_ = response_parser(r)
@@ -45,5 +62,6 @@ class POC(PocBase):
                             "response": parser_.getresponseraw()
                         }
                     })
-                    self.can_output(parse.getrootpath() + self.name,True)
+                    self.can_output(self.parse.getrootpath() + self.name, True)
+                    self.success = True
                     return

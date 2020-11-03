@@ -93,7 +93,12 @@ def banner():
     ''' + "\033[0m"
 
 
-def similar(text1, text2):
+def similar(text1, text2, strict=False):
+    '''
+    strict默认为了减小内存开销，为False,对于一般情况来说够准确了。
+    '''
+    if strict:
+        return difflib.SequenceMatcher(None, text1, text2).quick_ratio()
     min_len = min(len(text1), len(text2))
     return difflib.SequenceMatcher(None, text1[:min_len], text2[:min_len]).quick_ratio()
 

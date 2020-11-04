@@ -18,7 +18,7 @@ class POC(PocBase):
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
         self.name = "Tomcat Manager Path Normalization,vuln"
         self.vulmsg = '''Your can enum the path2 with like : /path../path2 ,/path/..;/path2,path2 is a dirfile .referer:https://i.blackhat.com/us-18/Wed-August-8/us-18-Orange-Tsai-Breaking-Parser-Logic-Take-Your-Path-Normalization-Off-And-Pop-0days-Out-2.pdf'''
-        self.level = 2  # 0:Low  1:Medium 2:High
+        self.level = 1  # 0:Low  1:Medium 2:High
         self.min_similar_rate = 0.98
 
     def verify(self):

@@ -102,7 +102,7 @@ class POC():
              "vulmsg": "Detect Jira Issue Management Software", "max_dir": 3},
             {"path": "jira/secure/Dashboard.jspa", "contains": b"Project Management Software",
              "vulmsg": "Detect Jira Issue Management Software", "max_dir": 3},
-            {"path": "settings.py", "contains": b"TEMPLATES",
+            {"path": "settings.py", "contains": b"\sTEMPLATES\s?=\s?\[",
              "vulmsg": "django settings.py leak", "max_dir": 3},
             {"path": "vpn/index.html", "contains": b"<title>Citrix Gateway</title>",
              "vulmsg": "Citrix VPN Detection", "max_dir": 3},

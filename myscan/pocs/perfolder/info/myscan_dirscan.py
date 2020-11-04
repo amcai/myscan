@@ -32,7 +32,7 @@ class POC():
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
         self.name = "dirscan"
         self.vulmsg = "leak info"
-        self.level = 2  # 0:Low  1:Medium 2:High
+        self.level = 1  # 0:Low  1:Medium 2:High
         self.exts_bak = [".gz", ".tar.gz", ".tar", ".zip", ".7z", ".rar", ".bak", ".backup", ".bz2", ".lz", ".sqlite",
                          ".sqlitedb", ".sql.7z", ".sql.rar", ".sql.zip"]
         self.found_path = set()
@@ -66,11 +66,11 @@ class POC():
                        'old', 'logo', 'back', 'bbs', 'temp', 'kibana', '2014', '2015', 'wwww', '3', '1', '网站', 'aa',
                        'www', 'www3', 'dump']
         hostlist = host.split(".")
-        startswith_ += host
+        startswith_ += [host]
         startswith_ += hostlist[:-1]
         startswith_ += ["".join(hostlist)]
-        startswith_ += ["".join(hostlist[1:])]
-        startswith_ += ["".join(hostlist[:-1])]
+        startswith_ += [".".join(hostlist[1:])]
+        startswith_ += [".".join(hostlist[:-1])]
         for s in list(set(startswith_)):
             for e in self.exts_bak:
                 bakfiles.append(s.lower() + e)

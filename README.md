@@ -45,10 +45,10 @@ $ python3 cli.py -h
 Example:
 
 
-禁用未授权,baseline，cors，jsonp插件，指定输出:
+建议大批量测试时候禁用未授权,baseline，cors，jsonp等插件，指定输出:
 
 ```
-python3 cli.py webscan --disable power baseline cors jsonp --html-output test.html 
+python3 cli.py webscan --disable power baseline cors jsonp sensitive_msg_transfer host_inject --html-output test.html 
 ```
 把redis所有数据清除（即清除当前的所有任务队列），针对指定host，指定redis连接方式,默认输出到myscan_result_{num}.html，启动10个进程，某些poc线程为5
 

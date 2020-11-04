@@ -71,7 +71,7 @@ python cli.py -h
 
 ## 检测插件
 
-XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2，Thinkphp，Weblogic... ，详见pocs目录，可根据数据包的特征，对每个参数进行测试，或者选择性测试，新的检测模块将不断添加。
+目录扫描，重定向，XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2，Thinkphp，Weblogic... ，详见pocs目录，可根据数据包的特征，对每个参数进行测试，或者选择性测试，新的检测模块将不断添加。
 
 支持检测POC如下：
 
@@ -80,6 +80,7 @@ XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2
 ├── perfile
 │   ├── myscan_crlf.py
 │   ├── myscan_dns_zone_transfer.py
+│   ├── myscan_editfile_leak.py
 │   ├── myscan_getpage.py
 │   ├── myscan_webpack_leak.py
 │   ├── poc_bash-cve-2014-6271.py
@@ -104,11 +105,13 @@ XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2
 │   ├── cacti
 │   │   └── poc_cacti-weathermap-file-write_2019.py
 │   ├── cisco
+│   │   ├── pcc_cisco_route_cve-2019-1653_2019.py
 │   │   └── poc_cisco_asa_cve-2020-3452.py
 │   ├── citrix
 │   │   ├── poc_citrix-cve-2019-19781-path-traversal_2019.py
 │   │   ├── poc_citrix-cve-2020-8191-xss_2020.py
-│   │   └── poc_citrix-cve-2020-8193-unauthorized.py
+│   │   ├── poc_citrix-cve-2020-8193-unauthorized.py
+│   │   └── poc_citrix-cve-2020-8982-unauth-fileread_2020.py
 │   ├── coldfusion
 │   │   └── poc_coldfusion-cve-2010-2861-lfi_2010.py
 │   ├── confluence
@@ -152,12 +155,16 @@ XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2
 │   │   ├── poc_elasticsearch-cve-2015-1427_2015.py
 │   │   ├── poc_elasticsearch-cve-2015-3337-lfi_2015.py
 │   │   └── poc_elasticsearch-unauth.py
+│   ├── exacqVision
+│   │   └── poc_exacqVision_cve-2020-9047_2020.py
 │   ├── f5
 │   │   └── poc_f5-tmui-cve-2020-5902-rce_2020.py
 │   ├── finecms
 │   │   └── poc_finecms-sqli_2019.py
 │   ├── finereport
 │   │   └── poc_finereport-directory-traversal_2019.py
+│   ├── fortigate
+│   │   └── poc_fortigate_cve-2018-13379_2018.py
 │   ├── hadoop
 │   │   └── poc_hadoop_unauth_acc_2018.py
 │   ├── hikvision
@@ -209,6 +216,8 @@ XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2
 │   │   ├── poc_phpstudy-nginx-wrong-resolve_2020.py
 │   │   └── poc_phpstudy_backdoor_2019.py
 │   ├── poc_user-agent-shell-shock_2018.py
+│   ├── pulsesecure
+│   │   └── poc_pulsesecure_sslvpn_cve-2019-11510_2019.py
 │   ├── qnap
 │   │   └── poc_qnap-cve-2019-7192_2019.py
 │   ├── rails
@@ -223,6 +232,8 @@ XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2
 │   ├── seeyon
 │   │   ├── poc_seeyon_fileread_2020.py
 │   │   └── poc_seeyon_u8_sqli_2020.py
+│   ├── sharepoint
+│   │   └── poc_sharepoint_rce_cve-2020-1147_2020.py
 │   ├── solr
 │   │   ├── poc_solr-velocity-template-rce_2019.py
 │   │   ├── poc_solr_cve-2017-12629-xxe_2017.py
@@ -233,6 +244,7 @@ XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2
 │   │   └── poc_spark_unacc_2018.py
 │   ├── spring
 │   │   ├── poc_spring-cloud-cve-2020-5410_2020.py
+│   │   ├── poc_spring-cloud-netflix-hystrix-dashboard_CVE-2020-5412_2020.py
 │   │   ├── poc_spring_cloud-cve-2020-5405_2020.py
 │   │   ├── poc_spring_cve-2016-4977_2016.py
 │   │   ├── poc_spring_cve-2019-3799_2019.py
@@ -263,8 +275,12 @@ XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2
 │   ├── tongda
 │   │   ├── poc_tongda_oa_rce1_2020.py
 │   │   └── poc_tongda_oa_rce_2020.py
+│   ├── ueditor
+│   │   └── poc_ueditor_cnvd-2017-20077-file-upload_2020.py
+│   ├── vbulletin
+│   │   ├── poc_vbulletin-cve-2019-16759_2019.py
+│   │   └── poc_vbulletin-cve-2019-16759_2019_bypass.py
 │   ├── vmware
-│   │   ├── poc_spring-cloud-netflix-hystrix-dashboard_CVE-2020-5412_2020.py
 │   │   └── poc_vmware_vcenter_readfile_2020.py
 │   ├── weaver
 │   │   └── poc_weaver-ebridge-file-read_2020.py
@@ -280,6 +296,8 @@ XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2
 │   │   ├── poc_wordpress-duplicator-path-traversal.py
 │   │   ├── poc_wordpress_configfile.py
 │   │   └── poc_wordpress_wordfence_xss.py
+│   ├── xunchi
+│   │   └── poc_xunchi-cnvd-2020-23735-file-read_2020.py
 │   ├── youphptube
 │   │   └── poc_youphptube-encoder-cve-2019-5129_2019.py
 │   └── zabbix
@@ -292,6 +310,7 @@ XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2
 │   ├── myscan_cmd_inject.py
 │   ├── myscan_cors.py
 │   ├── myscan_host_inject.py
+│   ├── myscan_jacokson_cve-2019-12384_2019.py
 │   ├── myscan_jsonp.py
 │   ├── myscan_phpcode_inject.py
 │   ├── myscan_phppath_leak.py
@@ -331,10 +350,11 @@ XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2
 
 
 
-
 ## 优势与不足
 
-* 支持反连平台，检测rmi，ldap，http，dnslog简单。
+* 支持--ipv6绕过防火墙， 优先解析域名为IPV6，前提是在支持IPV6的网站和网络上。
+
+* 内置反连平台，支持rmi，ldap，http，dnslog方式，可配置config.py部署在内外网，POC准确率高。
 * python代码开源，不会编程难写poc。
 * 依靠burp和redis，不用写监听程序和多进程处理数据容易，同时也严重依赖burp。
 * 自定义插件，比如把request/response数据包导入到elasticsearch，便于后续查询。

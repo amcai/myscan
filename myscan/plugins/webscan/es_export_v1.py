@@ -5,17 +5,15 @@
 from elasticsearch import helpers
 from myscan.lib.core.data import others
 from myscan.lib.core.data import logger
-from myscan.lib.core.common import getmd5, is_ipaddr, getredis
-import re, time
+from myscan.lib.core.common import getmd5, getredis
+import re
 from myscan.config import db_set
-import dns.resolver
-import traceback
 import mmh3, base64
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from myscan.lib.core.threads import mythread
-import json, traceback
-import socket
+import traceback
+from myscan.lib.core.dns import find_domain_ip
 
 
 class plugin():
@@ -41,11 +39,7 @@ class plugin():
         dictdata["url"]["pathroot"] = "{protocol}://{host}:{port}/".format(**dictdata.get("url"))
         if dictdata["url"]["extension"] == "ico":
             body = response_raw[int(dictdata.get("response").get("bodyoffset")):]
-            import binascii
-            # print(base64.b64encode(body))
-            print(str(mmh3.hash(base64.b64encode(body))))
             dictdata["url"]["icon_hash"] = str(mmh3.hash(base64.b64encode(body)))
-
         actions = []
         action = {
             "_index": "httpinfo",
@@ -83,54 +77,10 @@ class plugin():
             traceback.print_exc()
 
     def getaddr(self, domain):
-        if is_ipaddr(domain):
-            self.dict_host_ip[domain] = domain
-            return domain
-        key = getmd5("dnsdata_{}".format(domain))
-        dnsdata = self.red.get(key)
-        if dnsdata == b"":
-            self.dict_host_ip[domain] = None
-            return None
-        elif dnsdata is not None:
-            # print("already fuond it {} {}".format(domain,dnsdata))
-            self.dict_host_ip[domain] = dnsdata.decode()
-            return dnsdata.decode()
-        else:
-            # method 1
-            #  try:
-            #      resolver = dns.resolver.Resolver()
-            #      resolver.timeout = 5
-            #      resolver.lifetime = 5
-            #      A = resolver.query(domain, 'A')  # 指定查看类型为A记录
-            #      addrs = []
-            #      for i in A.response.answer:
-            #          for j in i.items:  # 遍历回应信息
-            #              if str(j).replace(".", "").isdigit():
-            #                  addrs.append(str(j))
-            #      self.dict_host_ip[domain] = addrs[0]
-            #      self.red.set(key, addrs[0])
-            #      return addrs[0]
-            #  except:
-            #      self.dict_host_ip[domain] = None
-            #      self.red.set(key, "")
-            #      return None
-
-            # method 2
-
-            try:
-                result = socket.getaddrinfo(domain, None)
-                domain_ip = result[-1][-1][0]
-                self.dict_host_ip[domain] = domain_ip
-                self.red.set(key, domain_ip)
-                return domain_ip
-            except Exception as ex:
-                # traceback.print_exc()
-                self.dict_host_ip[domain] = None
-                self.red.set(key, "")
-                return None
-            # if result:
-            #     print(result[-1][-1][0])
-            # return None
+        domain_ = find_domain_ip(domain)
+        ipmsg = domain_.find_ip()
+        self.dict_host_ip[domain] = ipmsg
+        return ipmsg
 
     def format_url(self, url):
         '''

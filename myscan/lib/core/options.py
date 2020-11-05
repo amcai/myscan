@@ -12,10 +12,12 @@ from myscan.lib.core.common import banner
 from myscan.lib.core.common_reverse import check_reverse
 from myscan.lib.core.register import load_file_to_module
 from myscan.lib.scriptlib.ssti.importssti import importssti
-from myscan.config import plugin_set
+from myscan.config import plugin_set,db_set
 from myscan.lib.core.conn import set_es_conn
 from myscan.lib.patch.paramiko_patch import patch_banner_timeout
 from myscan.lib.patch.ipv6_patch import ipv6_patch
+from myscan.lib.core.dns import find_dns_server
+
 
 def init_options():
     cmd_line_options.update(cmd_line_parser().__dict__)
@@ -47,6 +49,14 @@ def init_options():
     elif cmd_line_options.verbose == 3:
         logger.logger.setLevel(logging.CRITICAL)
 
+    # 验证DNS_Servers，添加到全局变量
+    if db_set.get("es_open"):
+        servers = find_dns_server().find_dnsservers()
+        logger.info("Found dns_servers:{}".format(servers))
+        if servers == []:
+            logger.warning("Not Found dns_servers, Check your Networks or edit data/common/dns_servers.txt")
+            sys.exit()
+        others.dns_servers = servers
     # 处理html-output
     logger.info("Vuln results will output to: {}".format(cmd_line_options.html_output))
 
@@ -91,7 +101,7 @@ def init_options():
                 for root, dirs, files in os.walk(os.path.join(paths.MYSCAN_POCS_PATH, _dir)):
                     for file in files:
                         if file.endswith(".py") and not file.startswith("__"):
-                            if not any([disable in file for disable in cmd_line_options.disable ]):
+                            if not any([disable in file for disable in cmd_line_options.disable]):
                                 poc_keys.get(_dir).append(os.path.abspath(os.path.join(root, file)))
         else:
             for _dir in cmd_line_options.poc_folders:
@@ -155,7 +165,7 @@ def init_options():
     importssti()
 
     # 需要注册一下需要urlpath的插件
-    poc1 = os.path.join(paths.MYSCAN_POCS_PATH, "perfolder", "info","myscan_dirscan.py")
+    poc1 = os.path.join(paths.MYSCAN_POCS_PATH, "perfolder", "info", "myscan_dirscan.py")
     if poc1 in cmd_line_options.pocs_perfoler:
         get_dict()
 
@@ -168,8 +178,9 @@ def init_options():
     set_es_conn()
 
     # 配置dishost host
-    if cmd_line_options.host :
-        cmd_line_options.dishost=[]
+    if cmd_line_options.host:
+        cmd_line_options.dishost = []
+
 
 def get_dict():
     others.url_dict_path = []

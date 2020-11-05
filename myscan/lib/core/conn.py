@@ -185,8 +185,9 @@ def set_httpinfo():
                                                                                        {'url_ip': {
                                                                                            'path_match': 'url.ip',
                                                                                            'mapping': {
-                                                                                               'type': 'ip'}}},
-                                                                                       {'url_ip': {
+                                                                                               'type': 'keyword',
+                                                                                               'ignore_above': 256}}},
+                                                                                       {'url_icon': {
                                                                                            'path_match': 'url.icon_hash',
                                                                                            'mapping': {
                                                                                                'type': 'keyword'}}}],

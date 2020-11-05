@@ -6,9 +6,10 @@ import threading
 # import traceback
 from queue import Queue
 from myscan.lib.core.data import logger
+from myscan.lib.core.data import cmd_line_options
 
 
-def mythread(func, mapslist, thread_num):
+def mythread(func, mapslist, thread_num=cmd_line_options.threads):
     threads = []
     queue = Queue()
     for i in mapslist:

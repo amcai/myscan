@@ -21,6 +21,7 @@ class python_plugin():
         # count==0 则删除，防止内存过大
         current_count = self.red.hincrby(self.workdata.get("id"), "count", amount=-1)
         if current_count == 0:
+            logger.debug("Will delete data for id:{}".format(self.workdata.get("id")))
             self.red.delete(self.workdata.get("id"))
 
         # self.workdata["dictdata"] = copy.deepcopy(dictdata)

@@ -12,7 +12,7 @@ from myscan.lib.core.common import banner
 from myscan.lib.core.common_reverse import check_reverse
 from myscan.lib.core.register import load_file_to_module
 from myscan.lib.scriptlib.ssti.importssti import importssti
-from myscan.config import plugin_set,db_set
+from myscan.config import plugin_set, db_set
 from myscan.lib.core.conn import set_es_conn
 from myscan.lib.patch.paramiko_patch import patch_banner_timeout
 from myscan.lib.patch.ipv6_patch import ipv6_patch
@@ -61,6 +61,7 @@ def init_options():
     logger.info("Vuln results will output to: {}".format(cmd_line_options.html_output))
 
     cmd_line_options.allow_poc = []
+    cmd_line_options.allow_plugin = {}
     cmd_line_options.pocs_perfile = []
     cmd_line_options.pocs_perfoler = []
     cmd_line_options.pocs_perscheme = []
@@ -150,17 +151,29 @@ def init_options():
         logger.warning("No Pocs Load!")
 
     # languages 插件参数处理
-    cmd_line_options.open_lugins = []
     plugins_dir = os.path.join(paths.MYSCAN_PLUGINS_PATH, cmd_line_options.command)
     exists_poc_with_ext = list(
         filter(lambda x: not x.startswith("__"), os.listdir(plugins_dir)))
     if cmd_line_options.plugins:
+
         for openplugin in list(set(cmd_line_options.plugins)):
             for plugin in exists_poc_with_ext:
                 if openplugin in plugin:
-                    logger.info("Load Plugin:{}".format(os.path.join(plugins_dir, plugin)))
-                    cmd_line_options.open_lugins.append(os.path.join(plugins_dir, plugin))
-
+                    plugin_path = os.path.join(plugins_dir, plugin)
+                    logger.info("Load Plugin:{}".format(plugin_path))
+                    cmd_line_options.allow_plugin[hash(plugin_path)] = {
+                        "poc": plugin_path,
+                        "class": load_file_to_module(plugin_path)
+                    }
+        if len(cmd_line_options.allow_plugin) == 0:
+            logger.warning("No Plugins Load!")
+    total_poc = 0
+    for x in cmd_line_options.pocs_load_moudle.values():
+        total_poc += len(x)
+    others.total_pocs=total_poc
+    if total_poc == 0 and len(cmd_line_options.allow_plugin) == 0:
+        logger.warning("No Plugins Pocs Load! Check your arguments ,Program will exit")
+        sys.exit()
     # 处理ssti全局变量
     importssti()
 

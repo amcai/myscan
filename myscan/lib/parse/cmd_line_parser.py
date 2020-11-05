@@ -58,7 +58,9 @@ def cmd_line_parser(argv=None):
         controller.add_argument("--threads", dest="threads", type=int, default=3, choices=range(1, 21),
                                 help="某些POC的线程数，默认3")
         controller.add_argument("--process", dest="process", type=int, default=5, choices=range(1, 61),
-                                help="myscan进程数，默认5")
+                                help="myscan的POC进程数，默认5")
+        controller.add_argument("--process-plugins", dest="process_plugins", type=int, default=5, choices=range(1, 10),
+                                help="myscan的Plugin进程数，默认5")
 
         request = parser.add_argument_group('Request', "配置请求参数")
         request.add_argument("--retry", dest="retry", type=int, default=0, help="定义全局request出错后重新尝试请求次数，默认0")

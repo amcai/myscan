@@ -42,11 +42,19 @@ def count_status():
                         burpdata_doned, burpdata_undo, active, unactive,
                         vuln, reverse_count), text="STATUS")
             elif cmd_line_options.command == "webscan":
-                logger.warning(
-                    "do/undo/active/unactive:{}/{}/{}/{} req_total/fail:{}/{} blockhost:{} vuln:{}/reverse:{}".format(
-                        burpdata_doned, burpdata_undo, active, unactive, request,
-                        request_fail,
-                        block_host, vuln, reverse_count), text="STATUS")
+                if cmd_line_options.allow_plugin:
+                    undoplugin = red.llen("plugin_data_py")
+                    logger.warning(
+                        "do/undo/active/unactive/undoplugin:{}/{}/{}/{}/{} req_total/fail:{}/{} blockhost:{} vuln:{}/reverse:{}".format(
+                            burpdata_doned, burpdata_undo, active, unactive, undoplugin, request,
+                            request_fail,
+                            block_host, vuln, reverse_count), text="STATUS")
+                else:
+                    logger.warning(
+                        "do/undo/active/unactive:{}/{}/{}/{} req_total/fail:{}/{} blockhost:{} vuln:{}/reverse:{}".format(
+                            burpdata_doned, burpdata_undo, active, unactive, request,
+                            request_fail,
+                            block_host, vuln, reverse_count), text="STATUS")
         except KeyboardInterrupt as ex:
             logger.warning("Ctrl+C was pressed ,aborted program")
         except Exception as ex:

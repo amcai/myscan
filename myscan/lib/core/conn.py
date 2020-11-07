@@ -123,8 +123,20 @@ def set_httpinfo():
                                                                                            'response_raw': {
                                                                                                'path_match': 'response.raw',
                                                                                                'mapping': {
-                                                                                                   'type': 'text',
-                                                                                                   'analyzer': 'ik_max_word'}}},
+                                                                                                   'type': 'text'
+                                                                                                   }}},
+                                                                                       {
+                                                                                           'request_headers': {
+                                                                                               'path_match': 'request.headers',
+                                                                                               'mapping': {
+                                                                                                   'type': 'text'
+                                                                                                   }}},
+                                                                                       {
+                                                                                           'response_headers': {
+                                                                                               'path_match': 'response.headers',
+                                                                                               'mapping': {
+                                                                                                   'type': 'keyword',
+                                                                                                   'ignore_above': 256}}},
                                                                                        {'url_path': {
                                                                                            'path_match': 'url.path',
                                                                                            'mapping': {

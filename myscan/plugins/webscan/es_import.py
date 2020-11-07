@@ -30,6 +30,8 @@ class POC():
         response_raw = base64.b64decode(self.dictdata.get("response").get("raw").encode("utf8"))
         dictdata["request"]["raw"] = request_raw.decode("utf-8", errors="ignore")
         dictdata["response"]["raw"] = response_raw.decode("utf-8", errors="ignore")
+        dictdata["request"]["headers"] = str(dictdata["request"]["headers"])
+        dictdata["response"]["headers"] = str(dictdata["response"]["headers"])
         if "others" in dictdata.keys():
             del dictdata["others"]
         if "filter" in dictdata.keys():

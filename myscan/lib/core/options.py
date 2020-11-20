@@ -14,12 +14,15 @@ from myscan.lib.core.register import load_file_to_module
 from myscan.lib.scriptlib.ssti.importssti import importssti
 from myscan.config import plugin_set, db_set
 from myscan.lib.core.conn import set_es_conn
-from myscan.lib.patch.paramiko_patch import patch_banner_timeout
+# from myscan.lib.patch.paramiko_patch import patch_banner_timeout
 from myscan.lib.patch.ipv6_patch import ipv6_patch
 from myscan.lib.core.dns import find_dns_server
+from myscan.lib.patch.requests_urlencode_patch import pathch_urlencode
 
 
 def init_options():
+    # 打补丁
+    pathch_urlencode()
     cmd_line_options.update(cmd_line_parser().__dict__)
     # 判断banner
     if cmd_line_options.show_version:

@@ -4,6 +4,7 @@
 # @Author  : w8ay
 # @File    : const.py
 
+key_unquote="myscan_unquote"
 
 acceptedExt = [
     '.php', '.php3', '.php4', '.php5', '.php7', '.phtml',

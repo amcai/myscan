@@ -9,11 +9,13 @@ from myscan.lib.core.data import logger
 from myscan.lib.core.data import cmd_line_options
 
 
-def mythread(func, mapslist, thread_num=cmd_line_options.threads):
+def mythread(func, mapslist, thread_num=None):
     threads = []
     queue = Queue()
     for i in mapslist:
         queue.put(i)
+    if thread_num is None:
+        thread_num = cmd_line_options.threads
     for x in range(0, int(thread_num)):
         threads.append(tThread(queue, func))
 

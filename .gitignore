@@ -1,5 +1,6 @@
 .DS_Store
 .idea
+tests/
 __pycache__/
 poc_seeyon_fileread_2020.py
 poc_huawei_fusion_default_password.py

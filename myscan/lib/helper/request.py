@@ -15,6 +15,7 @@ from random import uniform
 from myscan.pocs.search import searchmsg
 from myscan.config import scan_set
 import copy
+from myscan.lib.core.const import key_unquote
 
 
 def request(**kwargs_sour):
@@ -27,7 +28,14 @@ def request_session(session, **kwargs_sour):
 
 def do_req(session, **kwargs_sour):
     kwargs = copy.deepcopy(kwargs_sour)
-
+    if kwargs.get("quote", None) is not None:
+        if isinstance(kwargs.get("quote"), bool):
+            if not kwargs.get("quote"):
+                kwargs["url"] = key_unquote + kwargs.get("url", "")
+        else:
+            logger.warning("requests quote args need bool")
+            return
+        del kwargs["quote"]
     # print("start:",kwargs)
     if not kwargs.get("verify", None):
         kwargs["verify"] = False

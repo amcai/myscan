@@ -24,7 +24,7 @@ class POC():
         self.found_flag = []
 
     def verify(self):
-        if self.dictdata.get("url").get("extension")[:3].lower() not in ["", "php"]:
+        if self.dictdata.get("url").get("extension")[:3].lower() not in ["", "php", "do", "action"]:
             return
         self.parser = dictdata_parser(self.dictdata)
 
@@ -38,10 +38,10 @@ class POC():
     def inject(self, data):
         param, test_payload = data
         payload, show, plugin = test_payload
-        # 是php后缀，但是plugin不是php框架，不测试
-        if self.dictdata.get("url").get("extension")[:3].lower() in ["", "php"]:
-            if plugin.lower() not in ["php", "smarty", "twig"]:
-                return
+        # # 是php后缀，但是plugin不是php框架，不测试
+        # if self.dictdata.get("url").get("extension")[:3].lower() in ["", "php"]:
+        #     if plugin.lower() not in ["php", "smarty", "twig"]:
+        #         return
 
         flag = "{name}---{type}".format(**param)
         if flag in self.found_flag:

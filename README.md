@@ -3,7 +3,7 @@
 # myscan
 
 myscan是参考awvs的poc目录架构，pocsuite3、sqlmap等代码框架，以及搜集互联网上大量的poc，由python3开发而成的被动扫描工具。
-此项目源自个人开发项目，结合个人对web渗透，常见漏洞原理和检测的代码实现实现，通用poc的搜集，被动扫描器设计，以及信息搜集等思考实践。
+此项目源自个人开发项目，结合个人对web渗透，常见漏洞原理和检测的代码实现，通用poc的搜集，被动扫描器设计，以及信息搜集等思考实践。
 
 ## 法律免责声明
 
@@ -33,7 +33,7 @@ myscan调取redis数据，对每一个request/response数据包进行perfile(访
 
 软件要求: 
 
-python > 3.7.5 , redis-server ,(开发基于3.7.5，某些版本会出问题)
+python > 3.7.5 , redis-server ,(开发基于3.7.5，建议使用此版本，某些版本会出问题)
 
 ```bash
 $ redis-server # 起一个redis服务，默认监听127.1:6379
@@ -71,9 +71,9 @@ python cli.py -h
 
 ## 检测插件
 
-目录扫描，重定向，XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2，Thinkphp，Weblogic... ，详见pocs目录，可根据数据包的特征，对每个参数进行测试，或者选择性测试，新的检测模块将不断添加。
+目录扫描，重定向，XSS，SQL，XXE，CORS，JSONP，CRLF，CmdInject，敏感信息泄漏，Struts2，Thinkphp，Weblogic，Shiro... ，详见pocs目录，可根据数据包的特征，对每个参数进行测试，或者选择性测试，新的检测模块将不断添加。
 
-支持检测POC如下：
+支持检测POC如下(不及时完全更新，详见pocs目录)：
 
 ```shell
 .

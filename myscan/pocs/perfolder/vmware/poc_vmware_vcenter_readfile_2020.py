@@ -35,7 +35,7 @@ class POC():
             }
             r = request(**req)
             if r is not None and (b"driver = " in r.content and b"dbtype = " in r.content) or (r is not None and
-            re.search(b"root:[x\*]:0:0:", r.content)):
+            re.search(b"root:[x*]:0:0:", r.content)):
                 parser_ = response_parser(r)
                 self.result.append({
                     "name": self.name,

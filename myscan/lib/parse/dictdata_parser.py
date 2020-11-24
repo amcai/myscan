@@ -2,7 +2,7 @@
 # @Time    : 2020-02-14
 # @Author  : caicai
 # @File    : dictdata_parser.py
-from myscan.lib.core.common import getredis,verify_param,getmd5
+from myscan.lib.core.common import getredis, verify_param, getmd5
 import copy, base64
 from urllib import parse
 
@@ -160,12 +160,13 @@ class dictdata_parser():
         if not body:
             return body
         else:
-            value=verify_param(param,text,method,body,self.request_bodyoffset).encode()
+            value = verify_param(param, text, method, body, self.request_bodyoffset).encode()
             st = param.get("valuestart") - self.request_bodyoffset
             et = param.get("valueend") - self.request_bodyoffset
             bodyarray = bytearray(body)
             bodyarray[st: et] = value
             return bodyarray
+
     def setrequestbody_newkey(self, param, method="w", text=""):
         '''
         param : accpept dict
@@ -180,16 +181,16 @@ class dictdata_parser():
         body = self.getrequestbody()
         if not body:
             return body
-        if param.get("namestart")==-1:
+        if param.get("namestart") == -1:
             return body
         else:
             st = param.get("namestart") - self.request_bodyoffset
             et = param.get("nameend") - self.request_bodyoffset
             bodyarray = bytearray(body)
             if method == "w":
-                return bodyarray[:st]+text+bodyarray[et:]
+                return bodyarray[:st] + text + bodyarray[et:]
             else:
-                return bodyarray[:et]+text+bodyarray[et:]
+                return bodyarray[:et] + text + bodyarray[et:]
 
     def setrequesturlorcookie_newvalue(self, param, method="w", text="", urlencode=True, source="url"):
         '''
@@ -210,11 +211,12 @@ class dictdata_parser():
         if not params:
             return {}
         else:
-            value=verify_param(param,text,method,self.getrequestbody(),self.request_bodyoffset)
+            value = verify_param(param, text, method, self.getrequestbody(), self.request_bodyoffset)
             newparams_url = copy.deepcopy(params)
             newparams_url[param.get("name")] = value
             return newparams_url
-    def getreqfromparam(self, param, method="w", text=""):
+
+    def getreqfromparam(self, param, method="w", text="", isvalue=True):
         '''
         param : accpept dict
         method : accept a w . a:append ,w:write
@@ -222,28 +224,40 @@ class dictdata_parser():
         source :accept url and cookie
         return req
         '''
-        if param.get("type") == 0: #url参数
+        if param.get("type") == 0:  # url参数
             params_or_data = self.getrequestparams_urlorcookie("url")
-        elif param.get("type")==2: #cookie参数
+        elif param.get("type") == 2:  # cookie参数
             params_or_data = self.getrequestparams_urlorcookie("cookie")
         else:
-            params_or_data =self.getrequestbody()
-        value=verify_param(param,text,method,self.getrequestbody(),self.request_bodyoffset)
-        if param.get("type")==2:
+            params_or_data = self.getrequestbody()
+        value = verify_param(param, text, method, self.getrequestbody(), self.request_bodyoffset, isvalue)
+        if param.get("type") == 2:
             newparams_url = copy.deepcopy(params_or_data)
-            newparams_url[param.get("name")] = value
-            return self.generaterequest({"cookies":newparams_url})
-        if param.get("type")==0:
+            if isvalue:
+                newparams_url[param.get("name")] = value
+            else:
+                del newparams_url[param.get("name")]
+                newparams_url[value] = param.get("value", "")
+            return self.generaterequest({"cookies": newparams_url})
+
+        if param.get("type") == 0:
             newparams_url = copy.deepcopy(params_or_data)
-            newparams_url[param.get("name")] = value
-            return self.generaterequest({"params":newparams_url})
+            if isvalue:
+                newparams_url[param.get("name")] = value
+            else:
+                del newparams_url[param.get("name")]
+                newparams_url[value] = param.get("value", "")
+            return self.generaterequest({"params": newparams_url})
         else:
-            st = param.get("valuestart") - self.request_bodyoffset
-            et = param.get("valueend") - self.request_bodyoffset
+            if isvalue:
+                st = param.get("valuestart") - self.request_bodyoffset
+                et = param.get("valueend") - self.request_bodyoffset
+            else:
+                st = param.get("namestart") - self.request_bodyoffset
+                et = param.get("nameend") - self.request_bodyoffset
             bodyarray = bytearray(params_or_data)
             bodyarray[st: et] = value.encode()
-            return self.generaterequest({"data":bodyarray})
-
+            return self.generaterequest({"data": bodyarray})
 
     def getrequestraw(self):
         '''
@@ -288,14 +302,15 @@ class dictdata_parser():
         if place != -1:
             data_withpayload = body[:place + len(find_str)] + append_data + body[place + len(find_str):]
         return data_withpayload
+
     def getrawrequest(self):
         '''
         return dict
         '''
         return {
-            "method":self.request.get("method"),
-            "url":self.getfilepath(),
-            "headers":self.request.get("headers"),
-            "params":self.getrequestparams_urlorcookie("url"),
-            "data":self.getrequestbody()
+            "method": self.request.get("method"),
+            "url": self.getfilepath(),
+            "headers": self.request.get("headers"),
+            "params": self.getrequestparams_urlorcookie("url"),
+            "data": self.getrequestbody()
         }

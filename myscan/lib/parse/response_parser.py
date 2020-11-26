@@ -2,10 +2,15 @@
 # @Time    : 2020-02-14
 # @Author  : caicai
 # @File    : response_parser.py
+
+from urllib import parse
+
+
 class response_parser():
     '''
     此类解析处理rqeuests返回的的respose类
     '''
+
     def __init__(self, r):
         self.data = r
 
@@ -14,11 +19,15 @@ class response_parser():
         return bytes[]
         '''
         request_raw = "{} {} HTTP/1.1\r\n".format(self.data.request.method, self.data.request.path_url).encode()
+        if self.data.request.headers.get("Host", None) is None:
+            host = parse.urlparse(self.data.url).netloc
+            request_raw += "Host: {}\r\n".format(host).encode()
         for k, v in self.data.request.headers.items():
             request_raw += "{}: {}\r\n".format(k, v).encode()
+
         request_raw += b"\r\n"
         if self.data.request.body:
-            if isinstance(self.data.request.body,str):
+            if isinstance(self.data.request.body, str):
                 request_raw += self.data.request.body.encode(errors="ignore")
             else:
                 request_raw += self.data.request.body

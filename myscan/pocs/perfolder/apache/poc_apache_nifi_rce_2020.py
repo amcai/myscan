@@ -23,7 +23,7 @@ class POC():
         self.dictdata = workdata.get("dictdata")  # python的dict数据，详情请看docs/开发指南Example dict数据示例
         self.url = workdata.get("data")  # self.url为需要测试的url，值为目录url，会以/结尾,如https://www.baidu.com/home/ ,为目录
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
-        self.name = "nifi_rce"
+        self.name = "apache_nifi_rce"
         self.vulmsg = "link:https://github.com/imjdl/Apache-NiFi-Api-RCE"
         self.level = 2  # 0:Low  1:Medium 2:High
         self.success = False

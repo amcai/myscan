@@ -36,7 +36,8 @@ class POC():
         reverse_urls, hexdata_url = generate_reverse_payloads(self.name)
         reverse_dnscmd, hexdata_dns = generate_reverse_payloads(self.name, "dns")
         tasks = reverse_dnscmd + reverse_urls
-        mythread(self.exploit, tasks)
+        for task in tasks:
+            self.exploit(task)  # 存在delete task，单线程比较好
 
         if self.isnifi:
             sleep = True

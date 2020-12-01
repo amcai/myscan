@@ -5,6 +5,7 @@ requests-toolbelt
 redis
 flask
 six
+dnspython
 ldaptor
 pyCrypto
 pysmb

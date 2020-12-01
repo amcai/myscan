@@ -10,6 +10,10 @@ from myscan.lib.parse.response_parser import response_parser
 from myscan.lib.core.common import get_random_str
 import struct, binascii
 
+'''
+fofa:
+app="用友-UFIDA-NC"
+'''
 
 class POC():
     def __init__(self, workdata):

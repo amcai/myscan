@@ -25,7 +25,7 @@ class POC():
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
         self.name = "tongda oa rce"
         self.vulmsg = "未授权上传rce"
-        self.level = 2  # 0:Low  1:Medium 2:High
+        self.level = 3  # 0:Low  1:Medium 2:High
 
     def verify(self):
         # 添加限定条件

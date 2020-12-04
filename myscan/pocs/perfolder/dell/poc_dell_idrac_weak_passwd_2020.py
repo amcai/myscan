@@ -17,7 +17,7 @@ class POC():
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
         self.name = "idrac_weak_passwd"
         self.vulmsg = "take over host"
-        self.level = 2  # 0:Low  1:Medium 2:High
+        self.level = 3  # 0:Low  1:Medium 2:High
         self.isidrac = False
         self.success = False
 

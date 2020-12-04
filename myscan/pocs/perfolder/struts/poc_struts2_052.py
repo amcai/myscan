@@ -16,7 +16,7 @@ class POC():
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
         self.name = "Struts2-052"
         self.vulmsg = "Struts2-052漏洞..(参考metasploit中的struts2_rest_xstream模块)"
-        self.level = 2  # 0:Low  1:Medium 2:High
+        self.level = 3  # 0:Low  1:Medium 2:High
 
     def verify(self):
         # 添加限定条件

@@ -155,7 +155,7 @@
 self.result.append({
             "name": self.name,
             "url": "http://example.com/test.php",
-            "level": self.level,  # 0:Low  1:Medium 2:High
+            "level": self.level,  # -1:Info 0:Low  1:Medium 2:High 3:Critical
             "detail": {
                 "vulmsg": self.vulmsg,
             }

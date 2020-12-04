@@ -18,6 +18,7 @@ from myscan.lib.core.conn import set_es_conn
 from myscan.lib.patch.ipv6_patch import ipv6_patch
 from myscan.lib.core.dns import find_dns_server
 from myscan.lib.patch.requests_urlencode_patch import pathch_urlencode
+import copy
 
 
 def init_options():
@@ -135,13 +136,25 @@ def init_options():
                                 #         poc_keys.get(_dir).append(os.path.abspath(os.path.join(root, file)))
 
         for _dir in cmd_line_options.poc_folders:
-            logger.debug("{} total: {} pocs".format(_dir.capitalize(), len(list(set(poc_keys.get(_dir))))))
+            # logger.debug("{} total: {} pocs".format(_dir.capitalize(), len(list(set(poc_keys.get(_dir))))))
             for poc in list(set(poc_keys.get(_dir))):
-                logger.info("Load Pocs:{}".format(poc))
-                cmd_line_options.pocs_load_moudle[_dir][hash(poc)] = {
-                    "poc": poc,
-                    "class": load_file_to_module(poc)
-                }
+
+                # 此处为--level参数的bug修复，被迫实例化选择poc
+                class_ = load_file_to_module(poc)
+                class_poc = class_.POC(get_tmp_dictdata("webscan"))
+                if cmd_line_options.level > class_poc.level:
+                    logger.debug(
+                        "poc:{} level is {},your set level is {} .will ignore this poc".format(class_poc.name,
+                                                                                               class_poc.level,
+                                                                                               cmd_line_options.level))
+                    del class_poc
+                    continue
+                else:
+                    logger.info("Load Pocs:{}".format(poc))
+                    cmd_line_options.pocs_load_moudle[_dir][hash(poc)] = {
+                        "poc": poc,
+                        "class": class_
+                    }
         if cmd_line_options.command == "webscan":
             if not (cmd_line_options.pocs_perfile or cmd_line_options.pocs_perfoler or cmd_line_options.pocs_perscheme):
                 logger.warning("No Pocs ,please use  --enable un_auth sqli")
@@ -173,7 +186,7 @@ def init_options():
     total_poc = 0
     for x in cmd_line_options.pocs_load_moudle.values():
         total_poc += len(x)
-    others.total_pocs=total_poc
+    others.total_pocs = total_poc
     if total_poc == 0 and len(cmd_line_options.allow_plugin) == 0:
         logger.warning("No Plugins Pocs Load! Check your arguments ,Program will exit")
         sys.exit()
@@ -497,3 +510,85 @@ def gethtmlheader():
 
 
 <div id="vuln-records">'''
+
+
+def get_tmp_dictdata(type="webscan"):
+    if type == "webscan":
+        return copy.deepcopy({
+            "data": "http://www.baidu.com/",
+            "dictdata": {
+                "filter": False,  # 决定是否过滤，burp的proxy传过来为true，右键发过来为false
+                "request": {
+                    "headers": {
+                        "Origin": "http://www.myscantest.com:8888",
+                        "Cookie": "PHPSESSID=97k6cpaf7u21ba80vj1osp7q15; security=impossible",
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36",
+                        "Referer": "http://www.myscantest.com:8888/login.php",
+                        "Connection": "close",
+                        "Host": "www.myscantest.com:8888",
+                        "Accept-Encoding": "gzip, deflate",
+                        "Cache-Control": "max-age=0",
+                        "Upgrade-Insecure-Requests": "1",
+                        "Accept-Language": "zh-CN,zh;q=0.9",
+                        "Content-Length": "88",
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    "raw_ignore": False,
+                    "method": "POST",
+                    "content_type": 1,
+                    # {-1: "CONTENT_TYPE_UNKNOWN", 0:"CONTENT_TYPE_NONE",1: "CONTENT_TYPE_URL_ENCODED", 2: "CONTENT_TYPE_MULTIPART", 3: "CONTENT_TYPE_XML", 4: "CONTENT_TYPE_JSON", 5: "CONTENT_TYPE_AMF", } #上传:---2   body:a=haha---1     body:soap---0   body:json---4
+                    "raw": "UE9TVCAvbG9naW4ucGhwIEhUVFAvMS4xDQpIb3N0OiB3d3cubXlzY2FudGVzdC5jb206ODg4OA0K\nQ29udGVudC1MZW5ndGg6IDg4DQpDYWNoZS1Db250cm9sOiBtYXgtYWdlPTANCk9yaWdpbjogaHR0\ncDovL3d3dy5teXNjYW50ZXN0LmNvbTo4ODg4DQpVcGdyYWRlLUluc2VjdXJlLVJlcXVlc3RzOiAx\nDQpDb250ZW50LVR5cGU6IGFwcGxpY2F0aW9uL3gtd3d3LWZvcm0tdXJsZW5jb2RlZA0KVXNlci1B\nZ2VudDogTW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTNfNikgQXBw\nbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzc5LjAuMzk0NS4xMTcg\nU2FmYXJpLzUzNy4zNg0KQWNjZXB0OiB0ZXh0L2h0bWwsYXBwbGljYXRpb24veGh0bWwreG1sLGFw\ncGxpY2F0aW9uL3htbDtxPTAuOSxpbWFnZS93ZWJwLGltYWdlL2FwbmcsKi8qO3E9MC44LGFwcGxp\nY2F0aW9uL3NpZ25lZC1leGNoYW5nZTt2PWIzO3E9MC45DQpSZWZlcmVyOiBodHRwOi8vd3d3Lm15\nc2NhbnRlc3QuY29tOjg4ODgvbG9naW4ucGhwDQpBY2NlcHQtRW5jb2Rpbmc6IGd6aXAsIGRlZmxh\ndGUNCkFjY2VwdC1MYW5ndWFnZTogemgtQ04semg7cT0wLjkNCkNvb2tpZTogUEhQU0VTU0lEPTk3\nazZjcGFmN3UyMWJhODB2ajFvc3A3cTE1OyBzZWN1cml0eT1pbXBvc3NpYmxlDQpDb25uZWN0aW9u\nOiBjbG9zZQ0KDQp1c2VybmFtZT1hZG1pbiZwYXNzd29yZD1wYXNzd29yZCZMb2dpbj1Mb2dpbiZ1\nc2VyX3Rva2VuPTVkNWFlMTQ0NDMyY2Y4ZDJlMGU4NDNiN2NlYjZiYWY5",
+                    "params": {
+                        "params_body": [
+
+                        ],
+                        "params_url": [],
+                        "params_cookie": [
+                        ]
+                    },
+                    "bodyoffset": 695
+                },
+                "response": {
+                    "headers": {
+                        "Server": "Apache/2.4.7 (Ubuntu)",
+                        "Cache-Control": "no-store, no-cache, must-revalidate, post-check=0, pre-check=0",
+                        "Connection": "close",
+                        "Expires": "Thu, 19 Nov 1981 08:52:00 GMT",
+                        "Pragma": "no-cache",
+                        "Content-Length": "0",
+                        "Date": "Tue, 04 Feb 2020 08:23:57 GMT",
+                        "X-Powered-By": "PHP/5.5.9-1ubuntu4.25",
+                        "Location": "index.php",
+                        "Content-Type": "text/html"
+                    },
+                    "raw_ignore": False,
+                    "mime_stated": "HTML",
+                    "raw": "SFRUUC8xLjEgMzAyIEZvdW5kDQpEYXRlOiBUdWUsIDA0IEZlYiAyMDIwIDA4OjIzOjU3IEdNVA0K\nU2VydmVyOiBBcGFjaGUvMi40LjcgKFVidW50dSkNClgtUG93ZXJlZC1CeTogUEhQLzUuNS45LTF1\nYnVudHU0LjI1DQpFeHBpcmVzOiBUaHUsIDE5IE5vdiAxOTgxIDA4OjUyOjAwIEdNVA0KQ2FjaGUt\nQ29udHJvbDogbm8tc3RvcmUsIG5vLWNhY2hlLCBtdXN0LXJldmFsaWRhdGUsIHBvc3QtY2hlY2s9\nMCwgcHJlLWNoZWNrPTANClByYWdtYTogbm8tY2FjaGUNCkxvY2F0aW9uOiBpbmRleC5waHANCkNv\nbnRlbnQtTGVuZ3RoOiAwDQpDb25uZWN0aW9uOiBjbG9zZQ0KQ29udGVudC1UeXBlOiB0ZXh0L2h0\nbWwNCg0K",
+                    "bodyoffset": 348,
+                    "status": 302,
+                    "mime_inferred": ""
+                },
+                "url": {
+                    "path": "/login.php",
+                    "path_folder": "http://www.myscantest.com:8888/",
+                    "protocol": "http",
+                    "extension": "php",
+                    "port": 8888,
+                    "host": "www.myscantest.com",  # 不会带端口
+                    "url": "http://www.myscantest.com:8888/login.php"
+                },
+                "others": "powered by \u83dc\u83dc"
+            }})
+    else:
+        return copy.deepcopy({
+            "filter": False,  # redis是否去重
+            "scan": False,  # 是否再次用nmap确定服务，当为True时，service字段将无效
+            "addr": "1.1.1.1",  # 支持域名
+            "port": 80,
+            "type": "tcp",
+            "service": {  # nmap识别出来服务以及版本
+                "smb": "6.1",
+                "unknown": ""
+            }
+        })

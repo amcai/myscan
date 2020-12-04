@@ -16,7 +16,7 @@ class POC():
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
         self.name = "nexus-default-password"
         self.vulmsg = "referer:https://help.sonatype.com/learning/repository-manager-3/first-time-installation-and-setup/lesson-1%3A--installing-and-starting-nexus-repository-manager"
-        self.level = 2  # 0:Low  1:Medium 2:High
+        self.level = 3  # 0:Low  1:Medium 2:High
 
     def verify(self):
         # 根据config.py 配置的深度，限定一下目录深度

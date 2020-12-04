@@ -16,7 +16,7 @@ class POC():
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
         self.name = "ecology-filedownload-directory-traversal"
         self.vulmsg = "任意文件下载,referer:https://www.weaver.com.cn/cs/securityDownload.asp"
-        self.level = 2  # 0:Low  1:Medium 2:High
+        self.level = 3  # 0:Low  1:Medium 2:High
 
     def verify(self):
         # 根据config.py 配置的深度，限定一下目录深度

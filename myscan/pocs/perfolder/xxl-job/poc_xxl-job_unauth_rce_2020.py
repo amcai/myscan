@@ -17,7 +17,7 @@ class POC():
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
         self.name = "xxl-job_unauth_rce"
         self.vulmsg = "detail:https://github.com/vulhub/vulhub/tree/master/xxl-job/unacc"
-        self.level = 2  # 0:Low  1:Medium 2:High
+        self.level = 3  # 0:Low  1:Medium 2:High
         self.success = False
 
     def verify(self):

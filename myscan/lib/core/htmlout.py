@@ -33,14 +33,16 @@ from myscan.lib.core.options import gethtmlheader
 
 
 class htmlexport():
-    def __init__(self, results,filename):
+    def __init__(self, results, filename):
         self.results = results
-        self.outfilename=filename
+        self.outfilename = filename
         self.formatdata = '\n<input type="hidden" class="data-vuln-item" value="{}"/>\n'
         self.level_keys = {
+            "-1": "Info",
             "0": "Low",
             "1": "Medium",
-            "2": "High"
+            "2": "High",
+            "3": "Critical"
         }
 
     def save(self):
@@ -122,7 +124,7 @@ def writeresults():
                             outfilename = "{}{}.html".format('.'.join(cmd_line_options.html_output.split(".")[:-1]),
                                                              current)
                             check(outfilename)
-                            out = htmlexport([result],outfilename)
+                            out = htmlexport([result], outfilename)
                             out.save()
                             results = []
                     time.sleep(5)

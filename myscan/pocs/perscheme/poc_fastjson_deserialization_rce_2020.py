@@ -21,7 +21,7 @@ class POC(PocBase):
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
         self.name = "fastjson_deserialization_rce"
         self.vulmsg = "cool rce ! exploit it ! "
-        self.level = 1  # 0:Low  1:Medium 2:High
+        self.level = 3  # 0:Low  1:Medium 2:High
         self.saveflags = {}
 
     def verify(self):

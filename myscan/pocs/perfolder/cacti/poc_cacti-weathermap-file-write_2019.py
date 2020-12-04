@@ -18,7 +18,7 @@ class POC():
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
         self.name = "cacti-weathermap-file-write"
         self.vulmsg = "referer: https://www.secpulse.com/archives/47690.html"
-        self.level = 2  # 0:Low  1:Medium 2:High
+        self.level = 3  # 0:Low  1:Medium 2:High
 
     def verify(self):
         # 根据config.py 配置的深度，限定一下目录深度

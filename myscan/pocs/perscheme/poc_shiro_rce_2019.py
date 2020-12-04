@@ -27,7 +27,7 @@ class POC(PocBase):
         self.name = "shiro_rce"
         self.querykeys = {}
         self.vulmsg = "key can brute,you can use ysoserial to setup a JRMPServer to rce."
-        self.level = 2  # 0:Low  1:Medium 2:High
+        self.level = 3  # 0:Low  1:Medium 2:High
         self.shirokyes = (    # 要弄就弄全点
             "kPH+bIxk5D2deZiIxcaaaA==",
             "4AvVhmFLUs0KTA3Kprsdag==",

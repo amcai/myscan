@@ -20,7 +20,7 @@ class POC():
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
         self.name = "solr-velocity-template-rce"
         self.vulmsg = "CVE-2019-17558 ,referer:https://cert.360.cn/warning/detail?id=fba518d5fc5c4ed4ebedff1dab24caf2"
-        self.level = 2  # 0:Low  1:Medium 2:High
+        self.level = 3  # 0:Low  1:Medium 2:High
 
     def verify(self):
         # 根据config.py 配置的深度，限定一下目录深度

@@ -53,8 +53,8 @@ def cmd_line_parser(argv=None):
                                    "mozilla.com"],
                           help='使用此参数代表不扫描主机 .默认"baidu.com","google.com","firefox.com","mozilla.org","bdstatic.com","mozilla.com"')
         pocs.add_argument("--host", dest="host", nargs='+', default=None, help="只扫描的主机,主机名不携带端口")
-        pocs.add_argument("--level", dest="level", type=int, default=0,
-                          help="再次筛选poc的level等级，poc的level>=level则保留poc，常用与只测试高危poc，则--level 2")
+        pocs.add_argument("--level", dest="level", type=int, default=-1,
+                          help="再次筛选poc的level等级，可选择-1，1，2，3，分别代表-1:Info 0:Low  1:Medium 2:High 3:Critical，poc的level>=level则保留poc，常用与只测试高危poc，则--level 2，default:-1")
 
         controller = parser.add_argument_group('Controller', "")
         controller.add_argument("--threads", dest="threads", type=int, default=3, choices=range(1, 21),

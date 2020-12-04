@@ -136,14 +136,23 @@ def getmd5(s):
     return m.hexdigest()
 
 
-def is_base64(value: str):
+def is_base64(value):
+    '''
+    return : bytes or False
+    '''
     if isinstance(value, str):
         value = value.encode()
+    if len(value) % 4 != 0:
+        return False
+    regx = b'^[a-zA-Z0-9+/=%]+$'
+    if not re.match(regx, value):
+        return False
+
     try:
         res = base64.b64decode(value)
-        return res.decode().isprintable()
+        return res
     except Exception as ex:
-        print(ex)
+        # print(ex)
         return False
 
 

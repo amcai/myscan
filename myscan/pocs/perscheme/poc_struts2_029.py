@@ -38,7 +38,7 @@ class POC():
                 req = self.parser.getreqfromparam(param, "w", payload)
                 r = request(**req)
                 if r != None:
-                    if re.search("[^(echo)][^ (%20)]{}|^\s*{}\s*$".format(random_str,random_str).encode(),r.content):
+                    if re.search("[^(echo)][^ (%20)]{}|^\s*{}\s*$".format(random_str,random_str).encode(),r.content) and b"echo" not in r.content:
                         parser_ = response_parser(r)
                         self.result.append({
                             "name": self.name,

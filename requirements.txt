@@ -16,5 +16,6 @@ pymysql
 elasticsearch-dsl>=7.0.0,<8.0.0
 elasticsearch
 mmh3
+cryptography
 bs4
 pyDes

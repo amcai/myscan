@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # @Time    : 2020-03-01
 # @Author  : caicai
-# @File    : __myscan_sqli_boolen.py
+# @File    : myscan_sqli_boolen.py
 
 from myscan.lib.parse.dictdata_parser import dictdata_parser  # 写了一些操作dictdata的方法的类
 from myscan.lib.parse.response_parser import response_parser  ##写了一些操作resonse的方法的类
@@ -75,8 +75,12 @@ class POC():
                     random_num = random.randint(2, 8)
                     payloads_num = [
                         ("/0", "*1"),
-                        ("/**/and+{0}={1}".format(random_num, random_num + 1),
-                         "/**/and+{0}={1}".format(random_num, random_num)),
+                        (' and {}={}'.format(random_num,random_num+1),
+                         ' and {}={}'.format(random_num,random_num)
+                         ),
+                        ("/**/and {0}={1}".format(random_num, random_num + 1),
+                         "/**/and {0}={1}".format(random_num, random_num)),
+                        ("{}-1+2".format(param_value),"{}-1+1".format(param_value))
                     ]
                     for payload_false, payload_right in payloads_num:
                         req_true = self.parser.getreqfromparam(param, "a", payload_right)

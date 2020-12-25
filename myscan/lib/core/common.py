@@ -312,3 +312,17 @@ def isjson(arg, quote=True):
         return json.loads(arg)
     except:
         return False
+
+
+def check_echo(s, r1, r2):
+    success = False
+    for search in re.finditer(("%s(.{1,10})%s" % (r1, r2)).encode(), s):
+        start = search.start()
+        spacedata = search.groups()[0]
+        space_echo = s[start - len(spacedata):start] if start > len(spacedata) else s[0:start]
+        if space_echo != spacedata:
+            space_echo = s[start - len(b"echo" + spacedata):start] if start > len(b"echo" + spacedata) else s[0:start]
+            if space_echo != b"echo" + space_echo:
+                success = True
+                break
+    return success

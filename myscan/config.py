@@ -41,12 +41,12 @@ plugin_set = {
 
 # 配置反连平台 参考doc/Class1-关于被动扫描器.md的反连平台部分
 reverse_set = {
-    "reverse_http_ip": "203.195.199.146",  # http服务ip，一般和reverse_domain的a记录一致。
+    "reverse_http_ip": "x.x.x.x",  # http服务ip，一般和reverse_domain的a记录一致。
     "reverse_http_port": 9999,  # http服务端口
-    "reverse_domain": "log.evilhex.top",
-    "reverse_rmi_ip": "203.195.199.146",  # rmi服务ip，一般和http地址一致。
+    "reverse_domain": "y.y.y", # domain
+    "reverse_rmi_ip": "x.x.x.x",  # rmi服务ip，一般和http地址一致。
     "reverse_rmi_port": 10002,  # rmi服务端口
-    "reverse_ldap_ip": "203.195.199.146",  # ldap服务ip，一般和http地址一致。
+    "reverse_ldap_ip": "x.x.x.x",  # ldap服务ip，一般和http地址一致。
     "reverse_ldap_port": 10003,  # ldap服务端口
     # 配置ns的域名，如log.evilhex.top的ns记录指向testns.evilhex.top，testns.evilhex.top的a记录指向203.195.199.146。
     "secret_key": "haha,zheshiyigehenfuzademima",  # 客户端访问服务器密码，如果不配置，则随机密码，最好配置一下，不然客户端也得配置
